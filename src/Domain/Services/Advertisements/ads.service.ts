@@ -68,4 +68,54 @@ export class AdvertisementService implements IAdvertisementService {
 
     return advertisement;
   }
+
+  async updateAdvertisement(
+    id: string,
+    advertisementDto: Partial<AdvertisementDTO>,
+  ): Promise<Advertisement> {
+    this.logger.log(`Updating advertisement with ID: ${id}`);
+
+    // Check if advertisement exists
+    const existingAd = await this.advertisementRepository.findById(id);
+    if (!existingAd) {
+      throw new NotFoundException(`Advertisement with ID ${id} not found`);
+    }
+
+    // Only check name conflict if name is being updated
+    if (advertisementDto.adsName && advertisementDto.adsName !== existingAd.adsName) {
+      const nameExists = await this.advertisementRepository.existsWithNameExcludingId(
+        advertisementDto.adsName,
+        id
+      );
+      if (nameExists) {
+        throw new ConflictException(
+          `Advertisement with name ${advertisementDto.adsName} already exists`
+        );
+      }
+    }
+
+    // Merge existing data with update data
+    const updatedAdvertisement = new Advertisement(
+      advertisementDto.adsName ?? existingAd.adsName,
+      advertisementDto.budget ?? existingAd.budget,
+      advertisementDto.startDate ? new Date(advertisementDto.startDate) : existingAd.startDate,
+      advertisementDto.endDate ? new Date(advertisementDto.endDate) : existingAd.endDate,
+      advertisementDto.targetAudience ?? existingAd.targetAudience,
+      advertisementDto.locations ?? existingAd.locations,
+      advertisementDto.creativeType ?? existingAd.creativeType,
+      advertisementDto.creativeURL ?? existingAd.creativeURL,
+    );
+
+    // Validate dates if either date is being updated
+    if (advertisementDto.startDate || advertisementDto.endDate) {
+      if (updatedAdvertisement.endDate <= updatedAdvertisement.startDate) {
+        throw new ConflictException('End date must be after start date');
+      }
+    }
+
+    const updated = await this.advertisementRepository.update(id, updatedAdvertisement);
+    this.logger.log(`Advertisement updated successfully: ${id}`);
+
+    return updated;
+  }
 }

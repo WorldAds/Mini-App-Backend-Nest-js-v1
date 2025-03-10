@@ -5,4 +5,5 @@ export interface IAdvertisementService {
     createAdvertisement(advertisementDto: AdvertisementDTO): Promise<Advertisement>;
     getAllAdvertisements(): Promise<Advertisement[]>;
     getAdvertisementById(id: string): Promise<Advertisement>;
+    updateAdvertisement(id: string, advertisementDto: Partial<AdvertisementDTO>): Promise<Advertisement>;
 }

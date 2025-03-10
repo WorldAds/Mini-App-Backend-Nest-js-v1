@@ -194,4 +194,107 @@ describe('AdvertisementController (e2e)', () => {
         .expect(404);
     });
   });
+
+  describe('PUT /api/v1/advertisements/:id', () => {
+    it('should update an existing advertisement', async () => {
+      // First create a test advertisement
+      const newAd = {
+        adsName: 'Test Ad for Update',
+        budget: 1000,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-12-31'),
+        targetAudience: 'Young Adults',
+        locations: ['New York'],
+        creativeType: CreativeType.Image,
+        creativeURL: 'https://example.com/image.jpg',
+      };
+
+      // Create the advertisement
+      const createResponse = await request(app.getHttpServer())
+        .post('/api/v1/advertisements')
+        .send(newAd)
+        .expect(201);
+
+      const createdId = createResponse.body._id;
+
+      // Update data
+      const updateData = {
+        ...newAd,
+        adsName: 'Updated Test Ad',
+        budget: 2000,
+        targetAudience: 'Adults',
+      };
+
+      // Test updating the advertisement
+      return request(app.getHttpServer())
+        .put(`/api/v1/advertisements/${createdId}`)
+        .send(updateData)
+        .expect(200)
+        .expect((response) => {
+          expect(response.body._id).toBe(createdId);
+          expect(response.body.adsName).toBe(updateData.adsName);
+          expect(response.body.budget).toBe(updateData.budget);
+          expect(response.body.targetAudience).toBe(updateData.targetAudience);
+        });
+    });
+
+    it('should return 404 for updating non-existent advertisement', () => {
+      const updateData = {
+        adsName: 'Non-existent Ad',
+        budget: 1000,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-12-31'),
+        targetAudience: 'Young Adults',
+        locations: ['New York'],
+        creativeType: CreativeType.Image,
+        creativeURL: 'https://example.com/image.jpg',
+      };
+
+      return request(app.getHttpServer())
+        .put('/api/v1/advertisements/nonexistentid')
+        .send(updateData)
+        .expect(404);
+    });
+
+    it('should return 409 when updating with existing name', async () => {
+      // Create first advertisement
+      const firstAd = {
+        adsName: 'First Ad',
+        budget: 1000,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-12-31'),
+        targetAudience: 'Young Adults',
+        locations: ['New York'],
+        creativeType: CreativeType.Image,
+        creativeURL: 'https://example.com/image.jpg',
+      };
+
+      await request(app.getHttpServer())
+        .post('/api/v1/advertisements')
+        .send(firstAd)
+        .expect(201);
+
+      // Create second advertisement
+      const secondAd = {
+        ...firstAd,
+        adsName: 'Second Ad',
+      };
+
+      const secondAdResponse = await request(app.getHttpServer())
+        .post('/api/v1/advertisements')
+        .send(secondAd)
+        .expect(201);
+
+      // Try to update second ad with first ad's name
+      const updateData = {
+        ...secondAd,
+        adsName: 'First Ad',
+      };
+
+      return request(app.getHttpServer())
+        .put(`/api/v1/advertisements/${secondAdResponse.body._id}`)
+        .send(updateData)
+        .expect(409);
+    });
+  });
 });

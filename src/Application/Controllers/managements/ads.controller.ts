@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpStatus, Logger, Get, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, Logger, Get, Param, Put, NotFoundException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -71,6 +71,42 @@ export class AdvertisementController {
   async getAdvertisementById(@Param('id') id: string) {
     this.logger.log(`Received request to get advertisement with ID: ${id}`);
     const result = await this.advertisementService.getAdvertisementById(id);
+    return result;
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update an advertisement' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'The ID of the advertisement to update',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The advertisement has been successfully updated.',
+    type: AdvertisementDTO,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Advertisement not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data.',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Advertisement with this name already exists.',
+  })
+  async updateAdvertisement(
+    @Param('id') id: string,
+    @Body() advertisementDto: Partial<AdvertisementDTO>,
+  ) {
+    this.logger.log(`Received request to update advertisement with ID: ${id}`);
+    const result = await this.advertisementService.updateAdvertisement(
+      id,
+      advertisementDto,
+    );
     return result;
   }
 }
