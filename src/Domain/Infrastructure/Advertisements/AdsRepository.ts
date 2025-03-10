@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { IAdvertisementRepository } from './IAdsRepository';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Advertisement } from 'src/Domain/Entities/Advertisement';
 import { Repository } from 'typeorm';
 import { ObjectId } from 'mongodb';
+
+import { IAdvertisementRepository } from './IAdsRepository';
+import { Advertisement } from 'src/Domain/Entities/Advertisement';
 
 @Injectable()
 export class AdvertisementRepository implements IAdvertisementRepository {
@@ -23,9 +24,8 @@ export class AdvertisementRepository implements IAdvertisementRepository {
   }
 
   async exists(adsName: string): Promise<boolean> {
-    const count = await this.advertisementRepository.count({
-      where: { adsName },
-    });
-    return count > 0;
+    const matchedAds = await this.advertisementRepository.find({ where: { adsName } });
+
+    return matchedAds.length > 0;
   }
 }

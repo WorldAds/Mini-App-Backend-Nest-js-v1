@@ -5,7 +5,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { AdvertisementDTO } from '../../DTOs/managements/AdvertisementDTO';
+import { AdvertisementDTO } from 'src/Application/DTOs/managements/AdvertisementDTO';
 import { AdvertisementService } from 'src/Domain/Services/Advertisements/ads.service';
 
 @ApiTags('advertisements')

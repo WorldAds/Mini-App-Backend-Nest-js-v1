@@ -16,6 +16,7 @@ import { Advertisement } from '../../Domain/Entities/Advertisement';
         useNewUrlParser: true,
         useUnifiedTopology: true,
         logging: true,
+        logger: 'advanced-console', // Add this for more detailed logging
       }),
       inject: [ConfigService],
     }),

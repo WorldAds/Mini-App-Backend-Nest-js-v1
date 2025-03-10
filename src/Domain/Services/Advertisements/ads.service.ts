@@ -18,17 +18,16 @@ export class AdvertisementService implements IAdvertisementService {
   ): Promise<Advertisement> {
     this.logger.log(`Creating new advertisement: ${advertisementDto.adsName}`);
 
-    // Check if advertisement with same name exists
     const exists = await this.advertisementRepository.exists(
       advertisementDto.adsName,
     );
+
     if (exists) {
       throw new ConflictException(
         `Advertisement with name ${advertisementDto.adsName} already exists`,
       );
     }
 
-    // Create new advertisement entity
     const advertisement = new Advertisement(
       advertisementDto.adsName,
       advertisementDto.budget,
@@ -37,15 +36,13 @@ export class AdvertisementService implements IAdvertisementService {
       advertisementDto.targetAudience,
       advertisementDto.locations,
       advertisementDto.creativeType,
-      advertisementDto.creativeURL
+      advertisementDto.creativeURL,
     );
 
-    // Validate dates
     if (advertisement.endDate <= advertisement.startDate) {
       throw new ConflictException('End date must be after start date');
     }
 
-    // Save to database
     const created = await this.advertisementRepository.create(advertisement);
     this.logger.log(
       `Advertisement created successfully with ID: ${created._id}`,
