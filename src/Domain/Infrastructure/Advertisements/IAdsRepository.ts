@@ -7,4 +7,5 @@ export interface IAdvertisementRepository {
   findAll(): Promise<Advertisement[]>;
   update(id: string, advertisement: Advertisement): Promise<Advertisement>;
   existsWithNameExcludingId(adsName: string, id: string): Promise<boolean>;
+  delete(id: string): Promise<void>;
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpStatus, Logger, Get, Param, Put, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, Logger, Get, Param, Put, NotFoundException, Delete } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -108,5 +108,26 @@ export class AdvertisementController {
       advertisementDto,
     );
     return result;
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete an advertisement' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'The ID of the advertisement to delete',
+  })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'The advertisement has been successfully deleted.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Advertisement not found.',
+  })
+  async deleteAdvertisement(@Param('id') id: string) {
+    this.logger.log(`Received request to delete advertisement with ID: ${id}`);
+    await this.advertisementService.deleteAdvertisement(id);
+    return { statusCode: HttpStatus.NO_CONTENT };
   }
 }

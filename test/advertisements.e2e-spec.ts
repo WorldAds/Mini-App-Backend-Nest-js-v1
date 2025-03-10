@@ -297,4 +297,44 @@ describe('AdvertisementController (e2e)', () => {
         .expect(409);
     });
   });
+
+  describe('DELETE /api/v1/advertisements/:id', () => {
+    it('should delete an existing advertisement', async () => {
+      // First create a test advertisement
+      const newAd = {
+        adsName: 'Test Ad for Deletion',
+        budget: 1000,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-12-31'),
+        targetAudience: 'Young Adults',
+        locations: ['New York'],
+        creativeType: CreativeType.Image,
+        creativeURL: 'https://example.com/image.jpg',
+      };
+
+      // Create the advertisement
+      const createResponse = await request(app.getHttpServer())
+        .post('/api/v1/advertisements')
+        .send(newAd)
+        .expect(201);
+
+      const createdId = createResponse.body._id;
+
+      // Delete the advertisement
+      await request(app.getHttpServer())
+        .delete(`/api/v1/advertisements/${createdId}`)
+        .expect(204);
+
+      // Verify the advertisement no longer exists
+      await request(app.getHttpServer())
+        .get(`/api/v1/advertisements/${createdId}`)
+        .expect(404);
+    });
+
+    it('should return 404 for deleting non-existent advertisement', () => {
+      return request(app.getHttpServer())
+        .delete('/api/v1/advertisements/nonexistentid')
+        .expect(404);
+    });
+  });
 });

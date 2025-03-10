@@ -118,4 +118,17 @@ export class AdvertisementService implements IAdvertisementService {
 
     return updated;
   }
+
+  async deleteAdvertisement(id: string): Promise<void> {
+    this.logger.log(`Deleting advertisement with ID: ${id}`);
+    
+    // Check if advertisement exists
+    const advertisement = await this.advertisementRepository.findById(id);
+    if (!advertisement) {
+      throw new NotFoundException(`Advertisement with ID ${id} not found`);
+    }
+
+    await this.advertisementRepository.delete(id);
+    this.logger.log(`Advertisement deleted successfully: ${id}`);
+  }
 }
