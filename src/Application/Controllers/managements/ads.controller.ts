@@ -1,9 +1,10 @@
-import { Controller, Post, Body, HttpStatus, Logger, Get } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, Logger, Get, Param, NotFoundException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
 } from '@nestjs/swagger';
 import { AdvertisementDTO } from 'src/Application/DTOs/managements/AdvertisementDTO';
 import { AdvertisementService } from 'src/Domain/Services/Advertisements/ads.service';
@@ -48,6 +49,28 @@ export class AdvertisementController {
   async getAllAdvertisements() {
     this.logger.log('Received request to get all advertisements');
     const result = await this.advertisementService.getAllAdvertisements();
+    return result;
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get advertisement by ID' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'The ID of the advertisement',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The advertisement has been found',
+    type: AdvertisementDTO,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Advertisement not found',
+  })
+  async getAdvertisementById(@Param('id') id: string) {
+    this.logger.log(`Received request to get advertisement with ID: ${id}`);
+    const result = await this.advertisementService.getAdvertisementById(id);
     return result;
   }
 }

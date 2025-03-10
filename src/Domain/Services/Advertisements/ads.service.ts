@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, Logger, Inject } from '@nestjs/common';
+import { Injectable, ConflictException, Logger, Inject, NotFoundException } from '@nestjs/common';
 import { IAdvertisementService } from './ads.service.interface';
 import { IAdvertisementRepository } from 'src/Domain/Infrastructure/Advertisements/IAdsRepository';
 import { AdvertisementDTO } from 'src/Application/DTOs/managements/AdvertisementDTO';
@@ -56,5 +56,16 @@ export class AdvertisementService implements IAdvertisementService {
     const advertisements = await this.advertisementRepository.findAll();
     this.logger.log(`Retrieved ${advertisements.length} advertisements`);
     return advertisements;
+  }
+
+  async getAdvertisementById(id: string): Promise<Advertisement> {
+    this.logger.log(`Retrieving advertisement with ID: ${id}`);
+    const advertisement = await this.advertisementRepository.findById(id);
+    
+    if (!advertisement) {
+      throw new NotFoundException(`Advertisement with ID ${id} not found`);
+    }
+
+    return advertisement;
   }
 }

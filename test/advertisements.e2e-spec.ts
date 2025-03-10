@@ -153,4 +153,45 @@ describe('AdvertisementController (e2e)', () => {
         });
     });
   });
+
+  describe('GET /api/v1/advertisements/:id', () => {
+    it('should return a specific advertisement', async () => {
+      // First create a test advertisement
+      const newAd = {
+        adsName: 'Test Ad for Get By ID',
+        budget: 1000,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-12-31'),
+        targetAudience: 'Young Adults',
+        locations: ['New York'],
+        creativeType: CreativeType.Image,
+        creativeURL: 'https://example.com/image.jpg',
+      };
+
+      // Create the advertisement and get its ID
+      const createResponse = await request(app.getHttpServer())
+        .post('/api/v1/advertisements')
+        .send(newAd)
+        .expect(201);
+
+      const createdId = createResponse.body._id;
+
+      // Test getting the specific advertisement
+      return request(app.getHttpServer())
+        .get(`/api/v1/advertisements/${createdId}`)
+        .expect(200)
+        .expect((response) => {
+          expect(response.body._id).toBe(createdId);
+          expect(response.body.adsName).toBe(newAd.adsName);
+          expect(response.body.budget).toBe(newAd.budget);
+          expect(response.body.targetAudience).toBe(newAd.targetAudience);
+        });
+    });
+
+    it('should return 404 for non-existent advertisement', () => {
+      return request(app.getHttpServer())
+        .get('/api/v1/advertisements/nonexistentid')
+        .expect(404);
+    });
+  });
 });
