@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseService } from './database.service';
+import { Advertisement } from '../../Domain/Entities/Advertisement';
 
 @Module({
   imports: [
@@ -10,7 +11,7 @@ import { DatabaseService } from './database.service';
       useFactory: (configService: ConfigService) => ({
         type: 'mongodb',
         url: configService.get<string>('MONGODB_URL'),
-        entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
+        entities: [Advertisement], // Explicitly register the Advertisement entity
         synchronize: true,
         useNewUrlParser: true,
         useUnifiedTopology: true,

@@ -1,55 +1,52 @@
-import { Entity, ObjectIdColumn, Column } from 'typeorm';
-import { CreativeType } from "../ValueObjects/CreativeType";
-import { AdvertisementInterface } from "./AdvertisementInterface";
+import { Entity, ObjectIdColumn, Column, ObjectId } from 'typeorm';
+import { CreativeType } from '../ValueObjects/CreativeType';
 
-@Entity('advertisements')
-export class Advertisement implements AdvertisementInterface {
-    @ObjectIdColumn()
-    _id: string;
+@Entity()
+export class Advertisement {
+  @ObjectIdColumn()
+  _id: ObjectId;
 
-    @Column()
-    adsName: string;
+  @Column()
+  adsName: string;
 
-    @Column()
-    budget: number;
+  @Column()
+  budget: number;
 
-    @Column()
-    startDate: Date;
+  @Column()
+  startDate: Date;
 
-    @Column()
-    endDate: Date;
+  @Column()
+  endDate: Date;
 
-    @Column()
-    targetAudience: string;
+  @Column()
+  targetAudience: string;
 
-    @Column('array')
-    locations: string[];
+  @Column('simple-array')
+  locations: string[];
 
-    @Column()
-    creativeType: CreativeType;
+  @Column()
+  creativeType: CreativeType;
 
-    @Column()
-    creativeURL: string;
+  @Column()
+  creativeURL: string;
 
-    constructor(
-        _id: string,
-        adsName: string,
-        budget: number,
-        startDate: Date,
-        endDate: Date,
-        targetAudience: string,
-        locations: string[],
-        creativeType: CreativeType,
-        creativeURL: string
-    ) {
-        this._id = _id;
-        this.adsName = adsName;
-        this.budget = budget;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.targetAudience = targetAudience;
-        this.locations = locations;
-        this.creativeType = creativeType;
-        this.creativeURL = creativeURL;
-    }
+  constructor(
+    adsName: string,
+    budget: number,
+    startDate: Date,
+    endDate: Date,
+    targetAudience: string,
+    locations: string[],
+    creativeType: CreativeType,
+    creativeURL: string,
+  ) {
+    this.adsName = adsName;
+    this.budget = budget;
+    this.startDate = startDate;
+    this.endDate = endDate;
+    this.targetAudience = targetAudience;
+    this.locations = locations;
+    this.creativeType = creativeType;
+    this.creativeURL = creativeURL;
+  }
 }

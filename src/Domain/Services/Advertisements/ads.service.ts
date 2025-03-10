@@ -30,7 +30,6 @@ export class AdvertisementService implements IAdvertisementService {
 
     // Create new advertisement entity
     const advertisement = new Advertisement(
-      '',
       advertisementDto.adsName,
       advertisementDto.budget,
       new Date(advertisementDto.startDate),
@@ -38,7 +37,7 @@ export class AdvertisementService implements IAdvertisementService {
       advertisementDto.targetAudience,
       advertisementDto.locations,
       advertisementDto.creativeType,
-      advertisementDto.creativeURL,
+      advertisementDto.creativeURL
     );
 
     // Validate dates
