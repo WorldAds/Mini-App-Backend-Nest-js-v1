@@ -28,4 +28,12 @@ export class AdvertisementRepository implements IAdvertisementRepository {
 
     return matchedAds.length > 0;
   }
+
+  async findAll(): Promise<Advertisement[]> {
+    return await this.advertisementRepository.find({
+      order: {
+        adsName: 'ASC' // Optional: order by name
+      }
+    });
+  }
 }

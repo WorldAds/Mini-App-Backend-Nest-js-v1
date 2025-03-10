@@ -3,4 +3,5 @@ import { Advertisement } from "src/Domain/Entities/Advertisement";
 
 export interface IAdvertisementService {
     createAdvertisement(advertisementDto: AdvertisementDTO): Promise<Advertisement>;
+    getAllAdvertisements(): Promise<Advertisement[]>;
 }

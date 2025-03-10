@@ -106,4 +106,51 @@ describe('AdvertisementController (e2e)', () => {
         .expect(400);
     });
   });
+
+  describe('GET /api/v1/advertisements', () => {
+    it('should return all advertisements', async () => {
+      // First create some test advertisements
+      const testAds = [
+        {
+          adsName: 'Test Ad 1',
+          budget: 1000,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          targetAudience: 'Young Adults',
+          locations: ['New York'],
+          creativeType: CreativeType.Image,
+          creativeURL: 'https://example.com/image1.jpg',
+        },
+        {
+          adsName: 'Test Ad 2',
+          budget: 2000,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          targetAudience: 'Adults',
+          locations: ['Los Angeles'],
+          creativeType: CreativeType.Video,
+          creativeURL: 'https://example.com/video1.mp4',
+        },
+      ];
+
+      // Create the test advertisements
+      for (const ad of testAds) {
+        await request(app.getHttpServer())
+          .post('/api/v1/advertisements')
+          .send(ad)
+          .expect(201);
+      }
+
+      // Test getting all advertisements
+      return request(app.getHttpServer())
+        .get('/api/v1/advertisements')
+        .expect(200)
+        .expect((response) => {
+          expect(Array.isArray(response.body)).toBe(true);
+          expect(response.body.length).toBe(2);
+          expect(response.body[0]).toHaveProperty('adsName');
+          expect(response.body[1]).toHaveProperty('adsName');
+        });
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpStatus, Logger } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, Logger, Get } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -35,6 +35,19 @@ export class AdvertisementController {
     this.logger.log('Received request to create advertisement');
     const result =
       await this.advertisementService.createAdvertisement(advertisementDto);
+    return result;
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all advertisements' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of all advertisements',
+    type: [AdvertisementDTO]
+  })
+  async getAllAdvertisements() {
+    this.logger.log('Received request to get all advertisements');
+    const result = await this.advertisementService.getAllAdvertisements();
     return result;
   }
 }

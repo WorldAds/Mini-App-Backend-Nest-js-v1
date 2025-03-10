@@ -50,4 +50,11 @@ export class AdvertisementService implements IAdvertisementService {
 
     return created;
   }
+
+  async getAllAdvertisements(): Promise<Advertisement[]> {
+    this.logger.log('Retrieving all advertisements');
+    const advertisements = await this.advertisementRepository.findAll();
+    this.logger.log(`Retrieved ${advertisements.length} advertisements`);
+    return advertisements;
+  }
 }
