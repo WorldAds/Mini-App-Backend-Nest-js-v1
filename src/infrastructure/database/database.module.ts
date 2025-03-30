@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseService } from './database.service';
 import { Advertisement } from '../../Domain/Entities/Advertisement';
 import { Favorite } from '../../Domain/Entities/Favorite';
+import { Reward } from '../../Domain/Entities/Reward';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { Favorite } from '../../Domain/Entities/Favorite';
       useFactory: (configService: ConfigService) => ({
         type: 'mongodb',
         url: configService.get<string>('MONGODB_URL'),
-        entities: [Advertisement, Favorite],
+        entities: [Advertisement, Favorite, Reward],
         synchronize: true,
         useNewUrlParser: true,
         useUnifiedTopology: true,
