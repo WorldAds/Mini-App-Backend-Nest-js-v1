@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { ObjectId } from 'mongodb';
@@ -18,9 +18,19 @@ export class AdvertisementRepository implements IAdvertisementRepository {
   }
 
   async findById(id: string): Promise<Advertisement | null> {
-    return await this.advertisementRepository.findOne({
-      where: { _id: new ObjectId(id) },
-    });
+    try {
+      if (!ObjectId.isValid(id)) {
+        throw new BadRequestException('Invalid advertisement ID format');
+      }
+      return await this.advertisementRepository.findOne({
+        where: { _id: new ObjectId(id) },
+      });
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Invalid advertisement ID');
+    }
   }
 
   async exists(adsName: string): Promise<boolean> {
