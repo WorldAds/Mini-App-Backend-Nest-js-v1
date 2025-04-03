@@ -12,6 +12,9 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
+  // Enable CORS
+  app.enableCors();
+
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('Advertisement API')
@@ -24,8 +27,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
+  // Use Heroku's dynamic port or fallback to 3000
   const port = process.env.PORT || 3000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0'); // Listen on all network interfaces
 
   logger.log(`
 🚀 Server is running on: ${await app.getUrl()}

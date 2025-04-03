@@ -15,6 +15,12 @@ import { AdvertisementRepository } from 'src/Domain/Infrastructure/Advertisement
       useClass: AdvertisementRepository,
     },
   ],
-  exports: [AdvertisementService],
+  exports: [
+    AdvertisementService,
+    {
+      provide: 'IAdvertisementRepository',
+      useClass: AdvertisementRepository,
+    },
+  ],
 })
 export class AdvertisementModule {}
