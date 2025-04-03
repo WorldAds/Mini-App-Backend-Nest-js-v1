@@ -1,14 +1,14 @@
-import { 
-  Controller, 
-  Post, 
-  Body, 
-  HttpStatus, 
-  Logger, 
-  Get, 
-  Param, 
-  Put, 
-  Delete, 
-  Query, 
+import {
+  Controller,
+  Post,
+  Body,
+  HttpStatus,
+  Logger,
+  Get,
+  Param,
+  Put,
+  Delete,
+  Query,
   UseGuards,
   Request
 } from '@nestjs/common';
@@ -20,14 +20,14 @@ import {
   ApiParam,
   ApiQuery
 } from '@nestjs/swagger';
-import { 
-  CommentDTO, 
-  CreateCommentDTO, 
-  UpdateCommentDTO, 
-  ReplyDTO, 
-  CreateReplyDTO, 
-  UpdateReplyDTO, 
-  ReactionDTO, 
+import {
+  CommentDTO,
+  CreateCommentDTO,
+  UpdateCommentDTO,
+  ReplyDTO,
+  CreateReplyDTO,
+  UpdateReplyDTO,
+  ReactionDTO,
   CreateReactionDTO,
   PaginationQueryDTO
 } from 'src/Application/DTOs/comments/CommentDTO';
@@ -58,11 +58,11 @@ export class CommentController {
     @Request() req
   ) {
     this.logger.log('Received request to create comment');
-    
-    // In a real application, you would get the userId from the authenticated user
+
+    // TODO: In a real application, you would get the userId from the authenticated user
     // For now, we'll use a placeholder or pass it from the request
     const userId = req.user?.id || '123456'; // Placeholder user ID
-    
+
     const result = await this.commentService.createComment(
       createCommentDto.advertisementId,
       userId,
@@ -70,7 +70,7 @@ export class CommentController {
       createCommentDto.commentType,
       createCommentDto.mediaUrl
     );
-    
+
     return result;
   }
 
@@ -113,15 +113,19 @@ export class CommentController {
     @Query() paginationQuery: PaginationQueryDTO
   ) {
     this.logger.log(`Received request to get comments for advertisement with ID: ${advertisementId}`);
-    
-    const { page, limit } = paginationQuery;
-    
+
+    // Explicitly convert page and limit to numbers to handle Swagger string inputs
+    const page = paginationQuery.page ? Number(paginationQuery.page) : 1;
+    const limit = paginationQuery.limit ? Number(paginationQuery.limit) : 10;
+
+    this.logger.log(`Using pagination: page=${page}, limit=${limit}`);
+
     const result = await this.commentService.getCommentsByAdvertisementId(
       advertisementId,
       page,
       limit
     );
-    
+
     return result;
   }
 
@@ -151,16 +155,16 @@ export class CommentController {
     @Request() req
   ) {
     this.logger.log(`Received request to update comment with ID: ${id}`);
-    
-    // In a real application, you would check if the user is the owner of the comment
-    
+
+    // TODO: In a real application, you would check if the user is the owner of the comment
+
     const result = await this.commentService.updateComment(
       id,
       updateCommentDto.content,
       updateCommentDto.commentType,
       updateCommentDto.mediaUrl
     );
-    
+
     return result;
   }
 
@@ -184,11 +188,11 @@ export class CommentController {
     @Request() req
   ) {
     this.logger.log(`Received request to delete comment with ID: ${id}`);
-    
-    // In a real application, you would check if the user is the owner of the comment
-    
+
+    // TODO: In a real application, you would check if the user is the owner of the comment
+
     await this.commentService.deleteComment(id);
-    
+
     return { statusCode: HttpStatus.NO_CONTENT };
   }
 
@@ -209,10 +213,10 @@ export class CommentController {
     @Request() req
   ) {
     this.logger.log('Received request to create reply');
-    
-    // In a real application, you would get the userId from the authenticated user
+
+    // TODO: In a real application, you would get the userId from the authenticated user
     const userId = req.user?.id || '123456'; // Placeholder user ID
-    
+
     const result = await this.commentService.createReply(
       createReplyDto.commentId,
       userId,
@@ -220,7 +224,7 @@ export class CommentController {
       createReplyDto.commentType,
       createReplyDto.mediaUrl
     );
-    
+
     return result;
   }
 
@@ -263,15 +267,19 @@ export class CommentController {
     @Query() paginationQuery: PaginationQueryDTO
   ) {
     this.logger.log(`Received request to get replies for comment with ID: ${commentId}`);
-    
-    const { page, limit } = paginationQuery;
-    
+
+    // Explicitly convert page and limit to numbers to handle Swagger string inputs
+    const page = paginationQuery.page ? Number(paginationQuery.page) : 1;
+    const limit = paginationQuery.limit ? Number(paginationQuery.limit) : 10;
+
+    this.logger.log(`Using pagination: page=${page}, limit=${limit}`);
+
     const result = await this.commentService.getRepliesByCommentId(
       commentId,
       page,
       limit
     );
-    
+
     return result;
   }
 
@@ -301,16 +309,16 @@ export class CommentController {
     @Request() req
   ) {
     this.logger.log(`Received request to update reply with ID: ${id}`);
-    
-    // In a real application, you would check if the user is the owner of the reply
-    
+
+    // TODO: In a real application, you would check if the user is the owner of the reply
+
     const result = await this.commentService.updateReply(
       id,
       updateReplyDto.content,
       updateReplyDto.commentType,
       updateReplyDto.mediaUrl
     );
-    
+
     return result;
   }
 
@@ -334,11 +342,11 @@ export class CommentController {
     @Request() req
   ) {
     this.logger.log(`Received request to delete reply with ID: ${id}`);
-    
-    // In a real application, you would check if the user is the owner of the reply
-    
+
+    // TODO: In a real application, you would check if the user is the owner of the reply
+
     await this.commentService.deleteReply(id);
-    
+
     return { statusCode: HttpStatus.NO_CONTENT };
   }
 
@@ -359,17 +367,17 @@ export class CommentController {
     @Request() req
   ) {
     this.logger.log('Received request to add reaction');
-    
-    // In a real application, you would get the userId from the authenticated user
+
+    // TODO: In a real application, you would get the userId from the authenticated user
     const userId = req.user?.id || '123456'; // Placeholder user ID
-    
+
     const result = await this.commentService.addReaction(
       createReactionDto.targetId,
       createReactionDto.targetType,
       userId,
       createReactionDto.reactionType
     );
-    
+
     return result;
   }
 
@@ -393,11 +401,9 @@ export class CommentController {
     @Request() req
   ) {
     this.logger.log(`Received request to remove reaction with ID: ${id}`);
-    
-    // In a real application, you would check if the user is the owner of the reaction
-    
+
     await this.commentService.removeReaction(id);
-    
+
     return { statusCode: HttpStatus.NO_CONTENT };
   }
 
@@ -425,16 +431,15 @@ export class CommentController {
     @Request() req
   ) {
     this.logger.log(`Received request to get user reaction for ${targetType} with ID: ${targetId}`);
-    
-    // In a real application, you would get the userId from the authenticated user
+
     const userId = req.user?.id || '123456'; // Placeholder user ID
-    
+
     const result = await this.commentService.getUserReaction(
       targetId,
       targetType,
       userId
     );
-    
+
     return result;
   }
 }
