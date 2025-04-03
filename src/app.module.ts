@@ -4,6 +4,7 @@ import { DatabaseModule } from './infrastructure/database/database.module';
 import { AdvertisementModule } from './Application/Modules/AdvertisementModule';
 import { FavoriteModule } from './Application/Modules/FavoriteModule';
 import { RewardModule } from './Application/Modules/RewardModule';
+import { UserModule } from './Application/Modules/UserModule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -14,6 +15,7 @@ import { AppService } from './app.service';
     AdvertisementModule,
     FavoriteModule,
     RewardModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
