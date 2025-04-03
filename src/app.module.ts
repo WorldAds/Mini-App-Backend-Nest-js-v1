@@ -5,6 +5,7 @@ import { AdvertisementModule } from './Application/Modules/AdvertisementModule';
 import { FavoriteModule } from './Application/Modules/FavoriteModule';
 import { RewardModule } from './Application/Modules/RewardModule';
 import { UserModule } from './Application/Modules/UserModule';
+import { CommentModule } from './Application/Modules/CommentModule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -16,6 +17,7 @@ import { AppService } from './app.service';
     FavoriteModule,
     RewardModule,
     UserModule,
+    CommentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
