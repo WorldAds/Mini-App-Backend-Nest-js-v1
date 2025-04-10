@@ -14,10 +14,10 @@ export class CommentRepository implements ICommentRepository {
   constructor(
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
-    
+
     @InjectRepository(Reply)
     private readonly replyRepository: Repository<Reply>,
-    
+
     @InjectRepository(Reaction)
     private readonly reactionRepository: Repository<Reaction>,
   ) {}
@@ -57,7 +57,7 @@ export class CommentRepository implements ICommentRepository {
       { _id: new ObjectId(id) },
       { ...commentData, updatedAt: new Date() }
     );
-    
+
     const updated = await this.findCommentById(id);
     if (!updated) {
       throw new NotFoundException(`Comment with id ${id} not found after update`);
@@ -70,10 +70,10 @@ export class CommentRepository implements ICommentRepository {
     if (result.affected === 0) {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
-    
+
     // Delete all replies to this comment
     await this.replyRepository.delete({ commentId: id });
-    
+
     // Delete all reactions to this comment
     await this.reactionRepository.delete({ targetId: id, targetType: 'Comment' });
   }
@@ -83,14 +83,16 @@ export class CommentRepository implements ICommentRepository {
       where: { advertisementId },
     });
   }
-  
+
   // Reply methods
   async createReply(reply: Reply): Promise<Reply> {
+    console.log(`Creating reply for comment: ${reply.commentId}`);
     const newReply = await this.replyRepository.save(reply);
-    
+    console.log(`Reply created with ID: ${newReply._id}`);
+
     // Update comment reply count
     await this.updateCommentReplyCount(reply.commentId);
-    
+
     return newReply;
   }
 
@@ -124,7 +126,7 @@ export class CommentRepository implements ICommentRepository {
       { _id: new ObjectId(id) },
       { ...replyData, updatedAt: new Date() }
     );
-    
+
     const updated = await this.findReplyById(id);
     if (!updated) {
       throw new NotFoundException(`Reply with id ${id} not found after update`);
@@ -137,17 +139,17 @@ export class CommentRepository implements ICommentRepository {
     if (!reply) {
       throw new NotFoundException(`Reply with ID ${id} not found`);
     }
-    
+
     const commentId = reply.commentId;
-    
+
     const result = await this.replyRepository.delete({ _id: new ObjectId(id) });
     if (result.affected === 0) {
       throw new NotFoundException(`Reply with ID ${id} not found`);
     }
-    
+
     // Delete all reactions to this reply
     await this.reactionRepository.delete({ targetId: id, targetType: 'Reply' });
-    
+
     // Update comment reply count
     await this.updateCommentReplyCount(commentId);
   }
@@ -157,7 +159,7 @@ export class CommentRepository implements ICommentRepository {
       where: { commentId },
     });
   }
-  
+
   // Reaction methods
   async createReaction(reaction: Reaction): Promise<Reaction> {
     // Check if user already reacted to this target
@@ -166,27 +168,27 @@ export class CommentRepository implements ICommentRepository {
       reaction.targetId,
       reaction.targetType
     );
-    
+
     // If reaction exists and is the same type, do nothing
     if (existingReaction && existingReaction.reactionType === reaction.reactionType) {
       return existingReaction;
     }
-    
+
     // If reaction exists but is different type, delete it first
     if (existingReaction) {
       await this.reactionRepository.delete({ _id: existingReaction._id });
     }
-    
+
     // Create new reaction
     const newReaction = await this.reactionRepository.save(reaction);
-    
+
     // Update reaction counts
     if (reaction.targetType === 'Comment') {
       await this.updateCommentReactionCount(reaction.targetId);
     } else if (reaction.targetType === 'Reply') {
       await this.updateReplyReactionCount(reaction.targetId);
     }
-    
+
     return newReaction;
   }
 
@@ -217,14 +219,14 @@ export class CommentRepository implements ICommentRepository {
     if (!reaction) {
       throw new NotFoundException(`Reaction with ID ${id} not found`);
     }
-    
+
     const { targetId, targetType } = reaction;
-    
+
     const result = await this.reactionRepository.delete({ _id: new ObjectId(id) });
     if (result.affected === 0) {
       throw new NotFoundException(`Reaction with ID ${id} not found`);
     }
-    
+
     // Update reaction counts
     if (targetType === 'Comment') {
       await this.updateCommentReactionCount(targetId);
@@ -238,7 +240,7 @@ export class CommentRepository implements ICommentRepository {
       where: { targetId, targetType, reactionType },
     });
   }
-  
+
   // Update reaction counts
   async updateCommentReactionCount(commentId: string): Promise<void> {
     const likeCount = await this.countReactionsByTargetAndType(
@@ -246,13 +248,13 @@ export class CommentRepository implements ICommentRepository {
       'Comment',
       ReactionType.Like
     );
-    
+
     const dislikeCount = await this.countReactionsByTargetAndType(
       commentId,
       'Comment',
       ReactionType.Dislike
     );
-    
+
     await this.commentRepository.update(
       { _id: new ObjectId(commentId) },
       { likeCount, dislikeCount }
@@ -265,13 +267,13 @@ export class CommentRepository implements ICommentRepository {
       'Reply',
       ReactionType.Like
     );
-    
+
     const dislikeCount = await this.countReactionsByTargetAndType(
       replyId,
       'Reply',
       ReactionType.Dislike
     );
-    
+
     await this.replyRepository.update(
       { _id: new ObjectId(replyId) },
       { likeCount, dislikeCount }
@@ -279,11 +281,38 @@ export class CommentRepository implements ICommentRepository {
   }
 
   async updateCommentReplyCount(commentId: string): Promise<void> {
+    console.log(`Updating reply count for comment: ${commentId}`);
     const replyCount = await this.countRepliesByCommentId(commentId);
-    
-    await this.commentRepository.update(
-      { _id: new ObjectId(commentId) },
-      { replyCount }
-    );
+    console.log(`Found ${replyCount} replies for comment: ${commentId}`);
+
+    try {
+      // Check if the comment exists
+      const comment = await this.commentRepository.findOne({
+        where: { _id: new ObjectId(commentId) }
+      });
+
+      if (!comment) {
+        console.error(`Comment with ID ${commentId} not found when updating reply count`);
+        return;
+      }
+
+      // Use a more direct approach to update the replyCount
+      comment.replyCount = replyCount;
+      comment.updatedAt = new Date();
+
+      await this.commentRepository.save(comment);
+
+      console.log(`Comment updated directly: replyCount = ${comment.replyCount}`);
+
+      // Verify the update
+      const updatedComment = await this.commentRepository.findOne({
+        where: { _id: new ObjectId(commentId) }
+      });
+
+      console.log(`Comment after update: replyCount = ${updatedComment?.replyCount}`);
+    } catch (error) {
+      console.error(`Error updating reply count: ${error.message}`);
+      throw error;
+    }
   }
 }

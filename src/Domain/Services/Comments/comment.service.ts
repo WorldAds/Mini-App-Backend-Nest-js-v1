@@ -167,7 +167,8 @@ export class CommentService implements ICommentService {
     this.logger.log(`Creating new reply for comment: ${commentId} by user: ${userId}`);
 
     // Check if comment exists
-    await this.getCommentById(commentId);
+    const comment = await this.getCommentById(commentId);
+    this.logger.log(`Found parent comment with ID: ${comment._id}, current replyCount: ${comment.replyCount}`);
 
     const reply = new Reply(
       commentId,
@@ -179,6 +180,10 @@ export class CommentService implements ICommentService {
 
     const created = await this.commentRepository.createReply(reply);
     this.logger.log(`Reply created successfully with ID: ${created._id}`);
+
+    // Verify the comment's reply count was updated
+    const updatedComment = await this.getCommentById(commentId);
+    this.logger.log(`After reply creation, comment replyCount: ${updatedComment.replyCount}`);
 
     return created;
   }
