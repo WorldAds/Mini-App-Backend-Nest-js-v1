@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsUrl, IsNumber, IsOptional } from 'class-validator';
-import { AvatarType } from '../../../Domain/ValueObjects/AvatarType';
+import { IsString, IsUrl, IsNumber, IsOptional } from 'class-validator';
 
 export class UserDTO {
     @ApiProperty({ description: 'The World ID of the user' })
@@ -11,12 +10,7 @@ export class UserDTO {
     @IsString()
     nickname: string;
 
-    @ApiProperty({ 
-        description: 'The type of avatar',
-        enum: AvatarType
-    })
-    @IsEnum(AvatarType)
-    avatarType: AvatarType;
+
 
     @ApiProperty({ description: 'The URL of the avatar' })
     @IsUrl()
@@ -43,6 +37,8 @@ export class CreateUserDTO {
     @ApiProperty({ description: 'The wallet address of the user' })
     @IsString()
     walletAddress: string;
+
+    // No need to add avatar property here as it's handled separately by the FileInterceptor
 }
 
 export class LoginUserDTO {
@@ -56,13 +52,6 @@ export class LoginUserDTO {
 }
 
 export class UpdateAvatarDTO {
-    @ApiProperty({ 
-        description: 'The type of avatar',
-        enum: AvatarType
-    })
-    @IsEnum(AvatarType)
-    avatarType: AvatarType;
-
     @ApiProperty({ description: 'The URL of the avatar' })
     @IsUrl()
     avatarUrl: string;

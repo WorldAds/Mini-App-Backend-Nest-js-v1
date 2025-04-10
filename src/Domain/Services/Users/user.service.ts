@@ -2,7 +2,7 @@ import { Injectable, ConflictException, Logger, Inject, NotFoundException } from
 import { IUserService } from './user.service.interface';
 import { IUserRepository } from '../../Infrastructure/Users/IUserRepository';
 import { User } from 'src/Domain/Entities/User';
-import { AvatarType } from 'src/Domain/ValueObjects/AvatarType';
+import { FileUploadService } from 'src/infrastructure/file-upload/file-upload.service';
 
 @Injectable()
 export class UserService implements IUserService {
@@ -12,6 +12,7 @@ export class UserService implements IUserService {
   constructor(
     @Inject('IUserRepository')
     private readonly userRepository: IUserRepository,
+    private readonly fileUploadService: FileUploadService,
   ) {}
 
   async createUser(worldId: string, nickname: string, walletAddress: string): Promise<User> {
@@ -29,10 +30,9 @@ export class UserService implements IUserService {
     const user = new User(
       worldId,
       nickname,
-      AvatarType.Generated,
-      avatarUrl,
       walletAddress,
-      0 // Initial wallet balance
+      0, // Initial wallet balance
+      avatarUrl
     );
 
     const created = await this.userRepository.create(user);
@@ -44,7 +44,7 @@ export class UserService implements IUserService {
   async getUserById(id: string): Promise<User> {
     this.logger.log(`Retrieving user with ID: ${id}`);
     const user = await this.userRepository.findById(id);
-    
+
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
@@ -55,7 +55,7 @@ export class UserService implements IUserService {
   async getUserByWorldId(worldId: string): Promise<User> {
     this.logger.log(`Retrieving user with World ID: ${worldId}`);
     const user = await this.userRepository.findByWorldId(worldId);
-    
+
     if (!user) {
       throw new NotFoundException(`User with World ID ${worldId} not found`);
     }
@@ -63,55 +63,96 @@ export class UserService implements IUserService {
     return user;
   }
 
-  async updateUserAvatar(id: string, avatarType: string, avatarUrl: string): Promise<User> {
+  async updateUserAvatar(id: string, avatarUrl: string): Promise<User> {
     this.logger.log(`Updating avatar for user with ID: ${id}`);
-    
+
     // Check if user exists
-    await this.getUserById(id);
-    
-    const updated = await this.userRepository.updateAvatar(id, avatarType, avatarUrl);
+    const user = await this.getUserById(id);
+
+    // If the user already has a custom avatar, delete the old file
+    if (user.avatarUrl && user.avatarUrl.startsWith('avatars/')) {
+      try {
+        await this.fileUploadService.deleteFile(user.avatarUrl);
+      } catch (error) {
+        this.logger.warn(`Failed to delete old avatar: ${error.message}`);
+        // Continue with the update even if deletion fails
+      }
+    }
+
+    const updated = await this.userRepository.updateAvatar(id, avatarUrl);
     this.logger.log(`Avatar updated successfully for user: ${id}`);
-    
+
+    return updated;
+  }
+
+  async uploadAvatar(id: string, file: Express.Multer.File): Promise<User> {
+    this.logger.log(`Uploading avatar for user with ID: ${id}`);
+
+    // Check if user exists
+    const user = await this.getUserById(id);
+
+    // Save the file
+    const relativePath = await this.fileUploadService.saveAvatar(file);
+
+    // Get the public URL
+    const avatarUrl = this.fileUploadService.getAvatarUrl(relativePath);
+
+    // If the user already has a custom avatar, delete the old file
+    if (user.avatarUrl && user.avatarUrl.startsWith('avatars/')) {
+      try {
+        await this.fileUploadService.deleteFile(user.avatarUrl);
+      } catch (error) {
+        this.logger.warn(`Failed to delete old avatar: ${error.message}`);
+        // Continue with the update even if deletion fails
+      }
+    }
+
+    // Update the user's avatar
+    const updated = await this.userRepository.updateAvatar(id, relativePath);
+    this.logger.log(`Avatar uploaded successfully for user: ${id}`);
+
+    // Return the updated user with the public URL for the avatar
+    updated.avatarUrl = avatarUrl;
     return updated;
   }
 
   async updateUserNickname(id: string, nickname: string): Promise<User> {
     this.logger.log(`Updating nickname for user with ID: ${id}`);
-    
+
     // Check if user exists
     await this.getUserById(id);
-    
+
     const updated = await this.userRepository.updateNickname(id, nickname);
     this.logger.log(`Nickname updated successfully for user: ${id}`);
-    
+
     return updated;
   }
 
   async updateWalletBalance(id: string, balance: number): Promise<User> {
     this.logger.log(`Updating wallet balance for user with ID: ${id}`);
-    
+
     // Check if user exists
     await this.getUserById(id);
-    
+
     const updated = await this.userRepository.updateWalletBalance(id, balance);
     this.logger.log(`Wallet balance updated successfully for user: ${id}`);
-    
+
     return updated;
   }
 
   async loginUser(worldId: string, walletAddress: string): Promise<User> {
     this.logger.log(`User login attempt with World ID: ${worldId}`);
-    
+
     // Check if user exists
     const existingUser = await this.userRepository.findByWorldId(worldId);
-    
+
     // If user doesn't exist, create a new one with default nickname
     if (!existingUser) {
       this.logger.log(`New user login, creating account for World ID: ${worldId}`);
       const nickname = `User_${worldId.substring(0, 6)}`;
       return await this.createUser(worldId, nickname, walletAddress);
     }
-    
+
     // If wallet address has changed, update it
     if (existingUser.walletAddress !== walletAddress) {
       this.logger.log(`Updating wallet address for user: ${worldId}`);
@@ -120,7 +161,7 @@ export class UserService implements IUserService {
         updatedAt: new Date()
       });
     }
-    
+
     return existingUser;
   }
 }

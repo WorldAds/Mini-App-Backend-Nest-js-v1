@@ -1,10 +1,13 @@
-import { Controller, Post, Body, HttpStatus, Logger, Get, Param, Put, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, Logger, Get, Param, Put, NotFoundException, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import { UserDTO, CreateUserDTO, LoginUserDTO, UpdateAvatarDTO, UpdateNicknameDTO, UpdateWalletBalanceDTO } from 'src/Application/DTOs/users/UserDTO';
 import { UserService } from 'src/Domain/Services/Users/user.service';
@@ -18,7 +21,34 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new user' })
+  @ApiOperation({ summary: 'Create a new user with optional avatar upload' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        worldId: {
+          type: 'string',
+          description: 'The World ID of the user',
+        },
+        nickname: {
+          type: 'string',
+          description: 'The nickname of the user',
+        },
+        walletAddress: {
+          type: 'string',
+          description: 'The wallet address of the user',
+        },
+        avatar: {
+          type: 'string',
+          format: 'binary',
+          description: 'Avatar image file (JPG, PNG) - optional',
+        },
+      },
+      required: ['worldId', 'nickname', 'walletAddress'],
+    },
+  })
+  @UseInterceptors(FileInterceptor('avatar'))
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'The user has been successfully created.',
@@ -32,14 +62,34 @@ export class UserController {
     status: HttpStatus.CONFLICT,
     description: 'User with this World ID already exists.',
   })
-  async createUser(@Body() createUserDto: CreateUserDTO) {
+  async createUser(
+    @Body() createUserDto: CreateUserDTO,
+    @UploadedFile() avatar?: Express.Multer.File,
+  ) {
     this.logger.log('Received request to create user');
-    const result = await this.userService.createUser(
+
+    // Create the user
+    const user = await this.userService.createUser(
       createUserDto.worldId,
       createUserDto.nickname,
       createUserDto.walletAddress
     );
-    return result;
+
+    // If an avatar was uploaded, save it
+    if (avatar) {
+      this.logger.log(`Avatar file uploaded for new user: ${user._id}`);
+
+      // Validate file type
+      const validMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+      if (!validMimeTypes.includes(avatar.mimetype)) {
+        throw new BadRequestException('Invalid file type. Only JPG and PNG are allowed.');
+      }
+
+      // Upload the avatar for the newly created user
+      return await this.userService.uploadAvatar(user._id.toString(), avatar);
+    }
+
+    return user;
   }
 
   @Post('login')
@@ -107,7 +157,7 @@ export class UserController {
   }
 
   @Put(':id/avatar')
-  @ApiOperation({ summary: 'Update user avatar' })
+  @ApiOperation({ summary: 'Update user avatar with URL' })
   @ApiParam({
     name: 'id',
     required: true,
@@ -133,9 +183,62 @@ export class UserController {
     this.logger.log(`Received request to update avatar for user with ID: ${id}`);
     const result = await this.userService.updateUserAvatar(
       id,
-      updateAvatarDto.avatarType,
       updateAvatarDto.avatarUrl,
     );
+    return result;
+  }
+
+  @Post(':id/avatar/upload')
+  @ApiOperation({ summary: 'Upload user avatar image' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'The ID of the user',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Avatar image file (JPG, PNG)',
+        },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The avatar has been successfully uploaded.',
+    type: UserDTO,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid file or file type.',
+  })
+  async uploadAvatar(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    this.logger.log(`Received request to upload avatar for user with ID: ${id}`);
+
+    if (!file) {
+      throw new NotFoundException('No file uploaded');
+    }
+
+    // Validate file type (optional)
+    const validMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!validMimeTypes.includes(file.mimetype)) {
+      throw new NotFoundException('Invalid file type. Only JPG and PNG are allowed.');
+    }
+
+    const result = await this.userService.uploadAvatar(id, file);
     return result;
   }
 

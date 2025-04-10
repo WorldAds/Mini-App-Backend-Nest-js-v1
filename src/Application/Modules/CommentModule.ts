@@ -6,9 +6,13 @@ import { Reaction } from 'src/Domain/Entities/Reaction';
 import { CommentController } from '../Controllers/comments/comment.controller';
 import { CommentService } from 'src/Domain/Services/Comments/comment.service';
 import { CommentRepository } from 'src/Domain/Infrastructure/Comments/CommentRepository';
+import { FileUploadModule } from 'src/infrastructure/file-upload/file-upload.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Comment, Reply, Reaction])],
+  imports: [
+    TypeOrmModule.forFeature([Comment, Reply, Reaction]),
+    FileUploadModule,
+  ],
   controllers: [CommentController],
   providers: [
     CommentService,

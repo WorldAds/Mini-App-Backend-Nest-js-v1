@@ -5,7 +5,6 @@ import { ObjectId } from 'mongodb';
 
 import { IUserRepository } from './IUserRepository';
 import { User } from 'src/Domain/Entities/User';
-import { AvatarType } from 'src/Domain/ValueObjects/AvatarType';
 
 @Injectable()
 export class UserRepository implements IUserRepository {
@@ -45,7 +44,7 @@ export class UserRepository implements IUserRepository {
       { _id: new ObjectId(id) },
       { ...userData, updatedAt: new Date() }
     );
-    
+
     const updated = await this.findById(id);
     if (!updated) {
       throw new NotFoundException(`User with id ${id} not found after update`);
@@ -53,16 +52,15 @@ export class UserRepository implements IUserRepository {
     return updated;
   }
 
-  async updateAvatar(id: string, avatarType: string, avatarUrl: string): Promise<User> {
+  async updateAvatar(id: string, avatarUrl: string): Promise<User> {
     await this.userRepository.update(
       { _id: new ObjectId(id) },
-      { 
-        avatarType: avatarType as AvatarType, 
-        avatarUrl, 
-        updatedAt: new Date() 
+      {
+        avatarUrl,
+        updatedAt: new Date()
       }
     );
-    
+
     const updated = await this.findById(id);
     if (!updated) {
       throw new NotFoundException(`User with id ${id} not found after update`);
@@ -75,7 +73,7 @@ export class UserRepository implements IUserRepository {
       { _id: new ObjectId(id) },
       { nickname, updatedAt: new Date() }
     );
-    
+
     const updated = await this.findById(id);
     if (!updated) {
       throw new NotFoundException(`User with id ${id} not found after update`);
@@ -88,7 +86,7 @@ export class UserRepository implements IUserRepository {
       { _id: new ObjectId(id) },
       { walletBalance: balance, updatedAt: new Date() }
     );
-    
+
     const updated = await this.findById(id);
     if (!updated) {
       throw new NotFoundException(`User with id ${id} not found after update`);
