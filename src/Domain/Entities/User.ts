@@ -1,5 +1,4 @@
 import { Entity, ObjectIdColumn, Column, ObjectId } from 'typeorm';
-import { AvatarType } from '../ValueObjects/AvatarType';
 
 @Entity()
 export class User {
@@ -12,11 +11,10 @@ export class User {
   @Column()
   nickname: string;
 
-  @Column()
-  avatarType: AvatarType;
 
-  @Column()
-  avatarUrl: string;
+
+  @Column({ nullable: true })
+  avatarUrl?: string;
 
   @Column()
   walletAddress: string;
@@ -33,17 +31,15 @@ export class User {
   constructor(
     worldId: string,
     nickname: string,
-    avatarType: AvatarType,
-    avatarUrl: string,
     walletAddress: string,
     walletBalance: number = 0,
+    avatarUrl?: string,
   ) {
     this.worldId = worldId;
     this.nickname = nickname;
-    this.avatarType = avatarType;
-    this.avatarUrl = avatarUrl;
     this.walletAddress = walletAddress;
     this.walletBalance = walletBalance;
+    this.avatarUrl = avatarUrl;
     this.createdAt = new Date();
     this.updatedAt = new Date();
   }

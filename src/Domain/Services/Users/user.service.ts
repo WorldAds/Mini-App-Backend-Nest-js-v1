@@ -2,7 +2,6 @@ import { Injectable, ConflictException, Logger, Inject, NotFoundException } from
 import { IUserService } from './user.service.interface';
 import { IUserRepository } from '../../Infrastructure/Users/IUserRepository';
 import { User } from 'src/Domain/Entities/User';
-import { AvatarType } from 'src/Domain/ValueObjects/AvatarType';
 import { FileUploadService } from 'src/infrastructure/file-upload/file-upload.service';
 
 @Injectable()
@@ -31,10 +30,9 @@ export class UserService implements IUserService {
     const user = new User(
       worldId,
       nickname,
-      AvatarType.Generated,
-      avatarUrl,
       walletAddress,
-      0 // Initial wallet balance
+      0, // Initial wallet balance
+      avatarUrl
     );
 
     const created = await this.userRepository.create(user);
@@ -65,14 +63,14 @@ export class UserService implements IUserService {
     return user;
   }
 
-  async updateUserAvatar(id: string, avatarType: string, avatarUrl: string): Promise<User> {
+  async updateUserAvatar(id: string, avatarUrl: string): Promise<User> {
     this.logger.log(`Updating avatar for user with ID: ${id}`);
 
     // Check if user exists
     const user = await this.getUserById(id);
 
     // If the user already has a custom avatar, delete the old file
-    if (user.avatarType === AvatarType.Custom && user.avatarUrl && user.avatarUrl.startsWith('avatars/')) {
+    if (user.avatarUrl && user.avatarUrl.startsWith('avatars/')) {
       try {
         await this.fileUploadService.deleteFile(user.avatarUrl);
       } catch (error) {
@@ -81,7 +79,7 @@ export class UserService implements IUserService {
       }
     }
 
-    const updated = await this.userRepository.updateAvatar(id, avatarType, avatarUrl);
+    const updated = await this.userRepository.updateAvatar(id, avatarUrl);
     this.logger.log(`Avatar updated successfully for user: ${id}`);
 
     return updated;
@@ -100,7 +98,7 @@ export class UserService implements IUserService {
     const avatarUrl = this.fileUploadService.getAvatarUrl(relativePath);
 
     // If the user already has a custom avatar, delete the old file
-    if (user.avatarType === AvatarType.Custom && user.avatarUrl && user.avatarUrl.startsWith('avatars/')) {
+    if (user.avatarUrl && user.avatarUrl.startsWith('avatars/')) {
       try {
         await this.fileUploadService.deleteFile(user.avatarUrl);
       } catch (error) {
@@ -110,7 +108,7 @@ export class UserService implements IUserService {
     }
 
     // Update the user's avatar
-    const updated = await this.userRepository.updateAvatar(id, AvatarType.Custom, relativePath);
+    const updated = await this.userRepository.updateAvatar(id, relativePath);
     this.logger.log(`Avatar uploaded successfully for user: ${id}`);
 
     // Return the updated user with the public URL for the avatar

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpStatus, Logger, Get, Param, Put, NotFoundException, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, Logger, Get, Param, Put, NotFoundException, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
@@ -21,7 +21,34 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new user' })
+  @ApiOperation({ summary: 'Create a new user with optional avatar upload' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        worldId: {
+          type: 'string',
+          description: 'The World ID of the user',
+        },
+        nickname: {
+          type: 'string',
+          description: 'The nickname of the user',
+        },
+        walletAddress: {
+          type: 'string',
+          description: 'The wallet address of the user',
+        },
+        avatar: {
+          type: 'string',
+          format: 'binary',
+          description: 'Avatar image file (JPG, PNG) - optional',
+        },
+      },
+      required: ['worldId', 'nickname', 'walletAddress'],
+    },
+  })
+  @UseInterceptors(FileInterceptor('avatar'))
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'The user has been successfully created.',
@@ -35,14 +62,34 @@ export class UserController {
     status: HttpStatus.CONFLICT,
     description: 'User with this World ID already exists.',
   })
-  async createUser(@Body() createUserDto: CreateUserDTO) {
+  async createUser(
+    @Body() createUserDto: CreateUserDTO,
+    @UploadedFile() avatar?: Express.Multer.File,
+  ) {
     this.logger.log('Received request to create user');
-    const result = await this.userService.createUser(
+
+    // Create the user
+    const user = await this.userService.createUser(
       createUserDto.worldId,
       createUserDto.nickname,
       createUserDto.walletAddress
     );
-    return result;
+
+    // If an avatar was uploaded, save it
+    if (avatar) {
+      this.logger.log(`Avatar file uploaded for new user: ${user._id}`);
+
+      // Validate file type
+      const validMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+      if (!validMimeTypes.includes(avatar.mimetype)) {
+        throw new BadRequestException('Invalid file type. Only JPG and PNG are allowed.');
+      }
+
+      // Upload the avatar for the newly created user
+      return await this.userService.uploadAvatar(user._id.toString(), avatar);
+    }
+
+    return user;
   }
 
   @Post('login')
@@ -136,7 +183,6 @@ export class UserController {
     this.logger.log(`Received request to update avatar for user with ID: ${id}`);
     const result = await this.userService.updateUserAvatar(
       id,
-      updateAvatarDto.avatarType,
       updateAvatarDto.avatarUrl,
     );
     return result;
