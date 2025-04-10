@@ -13,24 +13,32 @@ export interface ICommentService {
     commentType: CommentType,
     mediaUrl?: string
   ): Promise<Comment>;
-  
+
+  createCommentWithMedia(
+    advertisementId: string,
+    userId: string,
+    content: string,
+    commentType: CommentType,
+    mediaFile: Express.Multer.File
+  ): Promise<Comment>;
+
   getCommentById(id: string): Promise<Comment>;
-  
+
   getCommentsByAdvertisementId(
     advertisementId: string,
     page?: number,
     limit?: number
   ): Promise<{ comments: Comment[], total: number, page: number, limit: number }>;
-  
+
   updateComment(
     id: string,
     content: string,
     commentType: CommentType,
     mediaUrl?: string
   ): Promise<Comment>;
-  
+
   deleteComment(id: string): Promise<void>;
-  
+
   // Reply methods
   createReply(
     commentId: string,
@@ -39,24 +47,24 @@ export interface ICommentService {
     commentType: CommentType,
     mediaUrl?: string
   ): Promise<Reply>;
-  
+
   getReplyById(id: string): Promise<Reply>;
-  
+
   getRepliesByCommentId(
     commentId: string,
     page?: number,
     limit?: number
   ): Promise<{ replies: Reply[], total: number, page: number, limit: number }>;
-  
+
   updateReply(
     id: string,
     content: string,
     commentType: CommentType,
     mediaUrl?: string
   ): Promise<Reply>;
-  
+
   deleteReply(id: string): Promise<void>;
-  
+
   // Reaction methods
   addReaction(
     targetId: string,
@@ -64,9 +72,9 @@ export interface ICommentService {
     userId: string,
     reactionType: ReactionType
   ): Promise<Reaction>;
-  
+
   removeReaction(id: string): Promise<void>;
-  
+
   getUserReaction(
     targetId: string,
     targetType: string,

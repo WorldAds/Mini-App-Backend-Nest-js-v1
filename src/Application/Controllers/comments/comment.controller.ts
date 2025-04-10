@@ -10,15 +10,21 @@ import {
   Delete,
   Query,
   UseGuards,
-  Request
+  Request,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
-  ApiQuery
+  ApiQuery,
+  ApiConsumes,
+  ApiBody
 } from '@nestjs/swagger';
 import {
   CommentDTO,
@@ -69,6 +75,70 @@ export class CommentController {
       createCommentDto.content,
       createCommentDto.commentType,
       createCommentDto.mediaUrl
+    );
+
+    return result;
+  }
+
+  @Post('with-media')
+  @ApiOperation({ summary: 'Create a new comment with media upload' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        advertisementId: {
+          type: 'string',
+          description: 'The ID of the advertisement',
+        },
+        content: {
+          type: 'string',
+          description: 'The content of the comment',
+        },
+        commentType: {
+          type: 'string',
+          enum: ['Text', 'Emoticon', 'Image', 'Video'],
+          description: 'The type of comment',
+        },
+        media: {
+          type: 'string',
+          format: 'binary',
+          description: 'Media file (image or video)',
+        },
+      },
+      required: ['advertisementId', 'content', 'commentType'],
+    },
+  })
+  @UseInterceptors(FileInterceptor('media'))
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'The comment with media has been successfully created.',
+    type: CommentDTO,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data or file type.',
+  })
+  async createCommentWithMedia(
+    @Body() createCommentDto: CreateCommentDTO,
+    @UploadedFile() media: Express.Multer.File,
+    @Request() req
+  ) {
+    this.logger.log('Received request to create comment with media');
+
+    if (!media) {
+      throw new BadRequestException('No media file uploaded');
+    }
+
+    // In a real application, you would get the userId from the authenticated user
+    const userId = req.user?.id || '123456'; // Placeholder user ID
+
+    const result = await this.commentService.createCommentWithMedia(
+      createCommentDto.advertisementId,
+      userId,
+      createCommentDto.content,
+      createCommentDto.commentType,
+      media
     );
 
     return result;

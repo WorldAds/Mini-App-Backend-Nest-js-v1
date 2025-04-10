@@ -6,6 +6,7 @@ import { Reply } from '../../Entities/Reply';
 import { Reaction } from '../../Entities/Reaction';
 import { CommentType } from '../../ValueObjects/CommentType';
 import { ReactionType } from '../../ValueObjects/ReactionType';
+import { FileUploadService } from 'src/infrastructure/file-upload/file-upload.service';
 
 @Injectable()
 export class CommentService implements ICommentService {
@@ -14,6 +15,7 @@ export class CommentService implements ICommentService {
   constructor(
     @Inject('ICommentRepository')
     private readonly commentRepository: ICommentRepository,
+    private readonly fileUploadService: FileUploadService,
   ) {}
 
   // Comment methods
@@ -40,10 +42,57 @@ export class CommentService implements ICommentService {
     return created;
   }
 
+  async createCommentWithMedia(
+    advertisementId: string,
+    userId: string,
+    content: string,
+    commentType: CommentType,
+    mediaFile: Express.Multer.File
+  ): Promise<Comment> {
+    this.logger.log(`Creating new comment with media for advertisement: ${advertisementId} by user: ${userId}`);
+
+    // Validate media type based on commentType
+    if (commentType === CommentType.Image) {
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+      if (!validImageTypes.includes(mediaFile.mimetype)) {
+        throw new BadRequestException('Invalid file type for image. Only JPG, PNG, and GIF are allowed.');
+      }
+    } else if (commentType === CommentType.Video) {
+      const validVideoTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo'];
+      if (!validVideoTypes.includes(mediaFile.mimetype)) {
+        throw new BadRequestException('Invalid file type for video. Only MP4, MPEG, MOV, and AVI are allowed.');
+      }
+    } else {
+      throw new BadRequestException('Comment type must be Image or Video when uploading media.');
+    }
+
+    // Save the media file
+    const relativePath = await this.fileUploadService.saveCommentMedia(mediaFile);
+
+    // Get the public URL
+    const mediaUrl = this.fileUploadService.getFileUrl(relativePath);
+
+    // Create the comment with the media URL
+    const comment = new Comment(
+      advertisementId,
+      userId,
+      content,
+      commentType,
+      relativePath // Store the relative path in the database
+    );
+
+    const created = await this.commentRepository.createComment(comment);
+    this.logger.log(`Comment with media created successfully with ID: ${created._id}`);
+
+    // Return the comment with the public URL for the media
+    created.mediaUrl = mediaUrl;
+    return created;
+  }
+
   async getCommentById(id: string): Promise<Comment> {
     this.logger.log(`Retrieving comment with ID: ${id}`);
     const comment = await this.commentRepository.findCommentById(id);
-    
+
     if (!comment) {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
@@ -57,16 +106,16 @@ export class CommentService implements ICommentService {
     limit = 10
   ): Promise<{ comments: Comment[], total: number, page: number, limit: number }> {
     this.logger.log(`Retrieving comments for advertisement: ${advertisementId}, page: ${page}, limit: ${limit}`);
-    
+
     const skip = (page - 1) * limit;
     const comments = await this.commentRepository.findCommentsByAdvertisementId(
       advertisementId,
       skip,
       limit
     );
-    
+
     const total = await this.commentRepository.countCommentsByAdvertisementId(advertisementId);
-    
+
     return {
       comments,
       total,
@@ -82,27 +131,27 @@ export class CommentService implements ICommentService {
     mediaUrl?: string
   ): Promise<Comment> {
     this.logger.log(`Updating comment with ID: ${id}`);
-    
+
     // Check if comment exists
     const comment = await this.getCommentById(id);
-    
+
     const updated = await this.commentRepository.updateComment(id, {
       content,
       commentType,
       mediaUrl,
       updatedAt: new Date()
     });
-    
+
     this.logger.log(`Comment updated successfully: ${id}`);
     return updated;
   }
 
   async deleteComment(id: string): Promise<void> {
     this.logger.log(`Deleting comment with ID: ${id}`);
-    
+
     // Check if comment exists
     await this.getCommentById(id);
-    
+
     await this.commentRepository.deleteComment(id);
     this.logger.log(`Comment deleted successfully: ${id}`);
   }
@@ -116,10 +165,10 @@ export class CommentService implements ICommentService {
     mediaUrl?: string
   ): Promise<Reply> {
     this.logger.log(`Creating new reply for comment: ${commentId} by user: ${userId}`);
-    
+
     // Check if comment exists
     await this.getCommentById(commentId);
-    
+
     const reply = new Reply(
       commentId,
       userId,
@@ -137,7 +186,7 @@ export class CommentService implements ICommentService {
   async getReplyById(id: string): Promise<Reply> {
     this.logger.log(`Retrieving reply with ID: ${id}`);
     const reply = await this.commentRepository.findReplyById(id);
-    
+
     if (!reply) {
       throw new NotFoundException(`Reply with ID ${id} not found`);
     }
@@ -151,19 +200,19 @@ export class CommentService implements ICommentService {
     limit = 10
   ): Promise<{ replies: Reply[], total: number, page: number, limit: number }> {
     this.logger.log(`Retrieving replies for comment: ${commentId}, page: ${page}, limit: ${limit}`);
-    
+
     // Check if comment exists
     await this.getCommentById(commentId);
-    
+
     const skip = (page - 1) * limit;
     const replies = await this.commentRepository.findRepliesByCommentId(
       commentId,
       skip,
       limit
     );
-    
+
     const total = await this.commentRepository.countRepliesByCommentId(commentId);
-    
+
     return {
       replies,
       total,
@@ -179,27 +228,27 @@ export class CommentService implements ICommentService {
     mediaUrl?: string
   ): Promise<Reply> {
     this.logger.log(`Updating reply with ID: ${id}`);
-    
+
     // Check if reply exists
     const reply = await this.getReplyById(id);
-    
+
     const updated = await this.commentRepository.updateReply(id, {
       content,
       commentType,
       mediaUrl,
       updatedAt: new Date()
     });
-    
+
     this.logger.log(`Reply updated successfully: ${id}`);
     return updated;
   }
 
   async deleteReply(id: string): Promise<void> {
     this.logger.log(`Deleting reply with ID: ${id}`);
-    
+
     // Check if reply exists
     await this.getReplyById(id);
-    
+
     await this.commentRepository.deleteReply(id);
     this.logger.log(`Reply deleted successfully: ${id}`);
   }
@@ -212,19 +261,19 @@ export class CommentService implements ICommentService {
     reactionType: ReactionType
   ): Promise<Reaction> {
     this.logger.log(`Adding ${reactionType} reaction to ${targetType} with ID: ${targetId} by user: ${userId}`);
-    
+
     // Validate target type
     if (targetType !== 'Comment' && targetType !== 'Reply') {
       throw new BadRequestException('Invalid target type. Must be either "Comment" or "Reply"');
     }
-    
+
     // Check if target exists
     if (targetType === 'Comment') {
       await this.getCommentById(targetId);
     } else if (targetType === 'Reply') {
       await this.getReplyById(targetId);
     }
-    
+
     const reaction = new Reaction(
       targetId,
       targetType,
@@ -240,7 +289,7 @@ export class CommentService implements ICommentService {
 
   async removeReaction(id: string): Promise<void> {
     this.logger.log(`Removing reaction with ID: ${id}`);
-    
+
     await this.commentRepository.deleteReaction(id);
     this.logger.log(`Reaction removed successfully: ${id}`);
   }
@@ -251,12 +300,12 @@ export class CommentService implements ICommentService {
     userId: string
   ): Promise<Reaction | null> {
     this.logger.log(`Getting reaction for ${targetType} with ID: ${targetId} by user: ${userId}`);
-    
+
     // Validate target type
     if (targetType !== 'Comment' && targetType !== 'Reply') {
       throw new BadRequestException('Invalid target type. Must be either "Comment" or "Reply"');
     }
-    
+
     return await this.commentRepository.findReactionByUserAndTarget(
       userId,
       targetId,
