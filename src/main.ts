@@ -2,14 +2,23 @@ import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  
+
   logger.log('🚀 Starting application...');
 
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
+
+  // Configure static file serving
+  const uploadDir = join(process.cwd(), 'uploads');
+  logger.log(`Serving static files from: ${uploadDir}`);
+  app.useStaticAssets(uploadDir, {
+    prefix: '/uploads',
   });
 
   // Enable CORS
