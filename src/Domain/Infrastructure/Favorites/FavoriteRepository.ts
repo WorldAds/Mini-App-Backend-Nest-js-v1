@@ -15,49 +15,49 @@ export class FavoriteRepository implements IFavoriteRepository {
     async create(favoriteDto: FavoriteDTO): Promise<FavoriteDTO> {
         const favorite = new Favorite(
             favoriteDto.adId,
-            favoriteDto.userAddress,
+            favoriteDto.worldId,
             favoriteDto.note,
         );
-        
+
         const created = await this.favoriteRepository.save(favorite);
-        
+
         return this.mapToDTO(created);
     }
 
-    async findByAdAndUser(adId: string, userAddress: string): Promise<FavoriteDTO | null> {
+    async findByAdAndUser(adId: string, worldId: string): Promise<FavoriteDTO | null> {
         const favorite = await this.favoriteRepository.findOne({
             where: {
                 adId,
-                userAddress,
+                worldId,
             },
         });
 
         return favorite ? this.mapToDTO(favorite) : null;
     }
 
-    async findByUser(userAddress: string): Promise<FavoriteDTO[]> {
+    async findByUser(worldId: string): Promise<FavoriteDTO[]> {
         const favorites = await this.favoriteRepository.find({
-            where: { userAddress },
+            where: { worldId },
             order: { createdAt: 'DESC' },
         });
 
         return favorites.map(favorite => this.mapToDTO(favorite));
     }
 
-    async exists(adId: string, userAddress: string): Promise<boolean> {
+    async exists(adId: string, worldId: string): Promise<boolean> {
         const count = await this.favoriteRepository.count({
             where: {
                 adId,
-                userAddress,
+                worldId,
             },
         });
         return count > 0;
     }
 
-    async delete(adId: string, userAddress: string): Promise<void> {
+    async delete(adId: string, worldId: string): Promise<void> {
         const result = await this.favoriteRepository.delete({
             adId,
-            userAddress,
+            worldId,
         });
 
         if (result.affected === 0) {
@@ -74,7 +74,7 @@ export class FavoriteRepository implements IFavoriteRepository {
     private mapToDTO(favorite: Favorite): FavoriteDTO {
         const dto = new FavoriteDTO();
         dto.adId = favorite.adId;
-        dto.userAddress = favorite.userAddress;
+        dto.worldId = favorite.worldId;
         dto.createdAt = favorite.createdAt;
         dto.note = favorite.note;
         return dto;

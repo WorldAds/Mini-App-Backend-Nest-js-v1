@@ -16,7 +16,7 @@ export class RewardRepository implements IRewardRepository {
   private mapToDTO(reward: Reward): RewardDTO {
     return {
       adId: reward.adId,
-      userId: reward.userId,
+      worldId: reward.worldId,
       rewardedAmount: reward.rewardedAmount,
       createdAt: reward.createdAt,
       chainId: reward.chainId,
@@ -26,7 +26,7 @@ export class RewardRepository implements IRewardRepository {
 
   async create(rewardDto: RewardDTO): Promise<RewardDTO> {
     const reward = new Reward(
-      rewardDto.userId,
+      rewardDto.worldId,
       rewardDto.adId,
       rewardDto.rewardedAmount,
       rewardDto.chainId,
@@ -37,9 +37,9 @@ export class RewardRepository implements IRewardRepository {
     return this.mapToDTO(created);
   }
 
-  async findByUserId(userId: string): Promise<RewardDTO[]> {
+  async findByUserId(worldId: string): Promise<RewardDTO[]> {
     const rewards = await this.rewardRepository.find({
-      where: { userId },
+      where: { worldId },
     });
     return rewards.map((reward) => this.mapToDTO(reward));
   }
@@ -52,19 +52,19 @@ export class RewardRepository implements IRewardRepository {
   }
 
   async findByUserAndAd(
-    userId: string,
+    worldId: string,
     adId: string,
   ): Promise<RewardDTO | null> {
     const reward = await this.rewardRepository.findOne({
-      where: { userId, adId },
+      where: { worldId, adId },
     });
     return reward ? this.mapToDTO(reward) : null;
   }
 
-  async getTotalRewardsByUser(userId: string): Promise<number> {
+  async getTotalRewardsByUser(worldId: string): Promise<number> {
     const result = await this.rewardRepository
       .createQueryBuilder('reward')
-      .where('reward.userId = :userId', { userId })
+      .where('reward.worldId = :worldId', { worldId })
       .select('SUM(reward.rewardedAmount)', 'total')
       .getRawOne();
     return result?.total || 0;

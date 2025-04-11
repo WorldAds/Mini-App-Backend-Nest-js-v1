@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsEthereumAddress, IsDate, IsOptional, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, IsDate, IsOptional, Matches } from 'class-validator';
 
 export class FavoriteDTO {
     @ApiProperty({
@@ -14,12 +14,12 @@ export class FavoriteDTO {
     adId: string;
 
     @ApiProperty({
-        description: 'The Ethereum wallet address of the user',
-        example: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
+        description: 'The World ID of the user',
+        example: 'user123'
     })
-    @IsEthereumAddress()
+    @IsString()
     @IsNotEmpty()
-    userAddress: string;
+    worldId: string;
 
     @ApiProperty({
         description: 'Timestamp when the favorite was created',

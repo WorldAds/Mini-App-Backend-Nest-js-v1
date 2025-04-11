@@ -25,7 +25,7 @@ export class FavoriteService implements IFavoriteService {
     // Check if already favorited
     const exists = await this.favoriteRepository.exists(
       favoriteDto.adId,
-      favoriteDto.userAddress,
+      favoriteDto.worldId,
     );
     if (exists) {
       throw new ConflictException('Advertisement is already in favorites');
@@ -37,17 +37,17 @@ export class FavoriteService implements IFavoriteService {
     return await this.favoriteRepository.create(favoriteDto);
   }
 
-  async removeFromFavorites(adId: string, userAddress: string): Promise<void> {
-    const favorite = await this.favoriteRepository.findByAdAndUser(adId, userAddress);
+  async removeFromFavorites(adId: string, worldId: string): Promise<void> {
+    const favorite = await this.favoriteRepository.findByAdAndUser(adId, worldId);
     if (!favorite) {
       throw new NotFoundException('Favorite not found');
     }
 
-    await this.favoriteRepository.delete(adId, userAddress);
+    await this.favoriteRepository.delete(adId, worldId);
   }
 
-  async getUserFavorites(userAddress: string): Promise<FavoriteDTO[]> {
-    return await this.favoriteRepository.findByUser(userAddress);
+  async getUserFavorites(worldId: string): Promise<FavoriteDTO[]> {
+    return await this.favoriteRepository.findByUser(worldId);
   }
 
   async getAdFavoriteCount(adId: string): Promise<number> {

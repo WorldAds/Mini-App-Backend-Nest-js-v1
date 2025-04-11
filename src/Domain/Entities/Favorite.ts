@@ -9,7 +9,7 @@ export class Favorite {
     adId: string;
 
     @Column()
-    userAddress: string;
+    worldId: string;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -25,13 +25,13 @@ export class Favorite {
 
     constructor(
         adId: string,
-        userAddress: string,
+        worldId: string,
         note?: string,
         chainId?: string,
         txHash?: string
     ) {
         this.adId = adId;
-        this.userAddress = userAddress;
+        this.worldId = worldId;
         this.note = note;
         this.chainId = chainId;
         this.txHash = txHash;
