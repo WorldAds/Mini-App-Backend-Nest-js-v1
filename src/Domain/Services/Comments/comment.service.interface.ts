@@ -48,6 +48,14 @@ export interface ICommentService {
     mediaUrl?: string
   ): Promise<Reply>;
 
+  createReplyWithMedia(
+    commentId: string,
+    worldId: string,
+    content: string,
+    commentType: CommentType,
+    mediaFile: Express.Multer.File
+  ): Promise<Reply>;
+
   getReplyById(id: string): Promise<Reply>;
 
   getRepliesByCommentId(

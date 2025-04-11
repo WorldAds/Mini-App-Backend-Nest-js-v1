@@ -85,6 +85,10 @@ export class CommentController {
           type: 'string',
           description: 'The ID of the advertisement',
         },
+        worldId: {
+          type: 'string',
+          description: 'The World ID of the user creating the comment',
+        },
         content: {
           type: 'string',
           description: 'The content of the comment',
@@ -100,7 +104,7 @@ export class CommentController {
           description: 'Media file (image or video)',
         },
       },
-      required: ['advertisementId', 'content', 'commentType'],
+      required: ['advertisementId', 'worldId', 'content', 'commentType'],
     },
   })
   @UseInterceptors(FileInterceptor('media'))
@@ -277,6 +281,70 @@ export class CommentController {
       createReplyDto.content,
       createReplyDto.commentType,
       createReplyDto.mediaUrl
+    );
+
+    return result;
+  }
+
+  @Post('reply/with-media')
+  @ApiOperation({ summary: 'Create a new reply with media upload' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        commentId: {
+          type: 'string',
+          description: 'The ID of the parent comment',
+        },
+        worldId: {
+          type: 'string',
+          description: 'The World ID of the user creating the reply',
+        },
+        content: {
+          type: 'string',
+          description: 'The content of the reply',
+        },
+        commentType: {
+          type: 'string',
+          enum: ['Text', 'Emoticon', 'Image', 'Video'],
+          description: 'The type of reply',
+        },
+        media: {
+          type: 'string',
+          format: 'binary',
+          description: 'Media file (image or video)',
+        },
+      },
+      required: ['commentId', 'worldId', 'content', 'commentType'],
+    },
+  })
+  @UseInterceptors(FileInterceptor('media'))
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'The reply with media has been successfully created.',
+    type: ReplyDTO,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data or file type.',
+  })
+  async createReplyWithMedia(
+    @Body() createReplyDto: CreateReplyDTO,
+    @UploadedFile() media: Express.Multer.File
+  ) {
+    this.logger.log('Received request to create reply with media');
+
+    if (!media) {
+      throw new BadRequestException('No media file uploaded');
+    }
+
+    const result = await this.commentService.createReplyWithMedia(
+      createReplyDto.commentId,
+      createReplyDto.worldId,
+      createReplyDto.content,
+      createReplyDto.commentType,
+      media
     );
 
     return result;

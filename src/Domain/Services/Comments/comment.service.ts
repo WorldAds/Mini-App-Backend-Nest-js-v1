@@ -188,6 +188,61 @@ export class CommentService implements ICommentService {
     return created;
   }
 
+  async createReplyWithMedia(
+    commentId: string,
+    worldId: string,
+    content: string,
+    commentType: CommentType,
+    mediaFile: Express.Multer.File
+  ): Promise<Reply> {
+    this.logger.log(`Creating new reply with media for comment: ${commentId} by user with World ID: ${worldId}`);
+
+    // Check if comment exists
+    const comment = await this.getCommentById(commentId);
+    this.logger.log(`Found parent comment with ID: ${comment._id}, current replyCount: ${comment.replyCount}`);
+
+    // Validate media type based on commentType
+    if (commentType === CommentType.Image) {
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+      if (!validImageTypes.includes(mediaFile.mimetype)) {
+        throw new BadRequestException('Invalid file type for image. Only JPG, PNG, and GIF are allowed.');
+      }
+    } else if (commentType === CommentType.Video) {
+      const validVideoTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo'];
+      if (!validVideoTypes.includes(mediaFile.mimetype)) {
+        throw new BadRequestException('Invalid file type for video. Only MP4, MPEG, MOV, and AVI are allowed.');
+      }
+    } else {
+      throw new BadRequestException('Comment type must be Image or Video when uploading media.');
+    }
+
+    // Save the media file
+    const relativePath = await this.fileUploadService.saveCommentMedia(mediaFile);
+
+    // Get the public URL
+    const mediaUrl = this.fileUploadService.getFileUrl(relativePath);
+
+    // Create the reply with the media URL
+    const reply = new Reply(
+      commentId,
+      worldId,
+      content,
+      commentType,
+      relativePath // Store the relative path in the database
+    );
+
+    const created = await this.commentRepository.createReply(reply);
+    this.logger.log(`Reply with media created successfully with ID: ${created._id}`);
+
+    // Verify the comment's reply count was updated
+    const updatedComment = await this.getCommentById(commentId);
+    this.logger.log(`After reply creation, comment replyCount: ${updatedComment.replyCount}`);
+
+    // Return the reply with the public URL for the media
+    created.mediaUrl = mediaUrl;
+    return created;
+  }
+
   async getReplyById(id: string): Promise<Reply> {
     this.logger.log(`Retrieving reply with ID: ${id}`);
     const reply = await this.commentRepository.findReplyById(id);
