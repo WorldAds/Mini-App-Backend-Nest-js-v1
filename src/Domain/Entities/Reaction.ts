@@ -13,7 +13,7 @@ export class Reaction {
   targetType: string; // "Comment" or "Reply"
 
   @Column()
-  userId: string;
+  worldId: string;
 
   @Column()
   reactionType: ReactionType;
@@ -24,12 +24,12 @@ export class Reaction {
   constructor(
     targetId: string,
     targetType: string,
-    userId: string,
+    worldId: string,
     reactionType: ReactionType,
   ) {
     this.targetId = targetId;
     this.targetType = targetType;
-    this.userId = userId;
+    this.worldId = worldId;
     this.reactionType = reactionType;
     this.createdAt = new Date();
   }

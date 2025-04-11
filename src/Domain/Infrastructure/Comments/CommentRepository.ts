@@ -164,7 +164,7 @@ export class CommentRepository implements ICommentRepository {
   async createReaction(reaction: Reaction): Promise<Reaction> {
     // Check if user already reacted to this target
     const existingReaction = await this.findReactionByUserAndTarget(
-      reaction.userId,
+      reaction.worldId,
       reaction.targetId,
       reaction.targetType
     );
@@ -208,9 +208,9 @@ export class CommentRepository implements ICommentRepository {
     }
   }
 
-  async findReactionByUserAndTarget(userId: string, targetId: string, targetType: string): Promise<Reaction | null> {
+  async findReactionByUserAndTarget(worldId: string, targetId: string, targetType: string): Promise<Reaction | null> {
     return await this.reactionRepository.findOne({
-      where: { userId, targetId, targetType },
+      where: { worldId, targetId, targetType },
     });
   }
 

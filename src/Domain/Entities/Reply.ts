@@ -10,7 +10,7 @@ export class Reply {
   commentId: string;
 
   @Column()
-  userId: string;
+  worldId: string;
 
   @Column()
   content: string;
@@ -35,13 +35,13 @@ export class Reply {
 
   constructor(
     commentId: string,
-    userId: string,
+    worldId: string,
     content: string,
     commentType: CommentType,
     mediaUrl?: string,
   ) {
     this.commentId = commentId;
-    this.userId = userId;
+    this.worldId = worldId;
     this.content = content;
     this.commentType = commentType;
     this.mediaUrl = mediaUrl;

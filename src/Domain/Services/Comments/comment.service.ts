@@ -21,16 +21,16 @@ export class CommentService implements ICommentService {
   // Comment methods
   async createComment(
     advertisementId: string,
-    userId: string,
+    worldId: string,
     content: string,
     commentType: CommentType,
     mediaUrl?: string
   ): Promise<Comment> {
-    this.logger.log(`Creating new comment for advertisement: ${advertisementId} by user: ${userId}`);
+    this.logger.log(`Creating new comment for advertisement: ${advertisementId} by user with World ID: ${worldId}`);
 
     const comment = new Comment(
       advertisementId,
-      userId,
+      worldId,
       content,
       commentType,
       mediaUrl
@@ -44,12 +44,12 @@ export class CommentService implements ICommentService {
 
   async createCommentWithMedia(
     advertisementId: string,
-    userId: string,
+    worldId: string,
     content: string,
     commentType: CommentType,
     mediaFile: Express.Multer.File
   ): Promise<Comment> {
-    this.logger.log(`Creating new comment with media for advertisement: ${advertisementId} by user: ${userId}`);
+    this.logger.log(`Creating new comment with media for advertisement: ${advertisementId} by user with World ID: ${worldId}`);
 
     // Validate media type based on commentType
     if (commentType === CommentType.Image) {
@@ -75,7 +75,7 @@ export class CommentService implements ICommentService {
     // Create the comment with the media URL
     const comment = new Comment(
       advertisementId,
-      userId,
+      worldId,
       content,
       commentType,
       relativePath // Store the relative path in the database
@@ -159,12 +159,12 @@ export class CommentService implements ICommentService {
   // Reply methods
   async createReply(
     commentId: string,
-    userId: string,
+    worldId: string,
     content: string,
     commentType: CommentType,
     mediaUrl?: string
   ): Promise<Reply> {
-    this.logger.log(`Creating new reply for comment: ${commentId} by user: ${userId}`);
+    this.logger.log(`Creating new reply for comment: ${commentId} by user with World ID: ${worldId}`);
 
     // Check if comment exists
     const comment = await this.getCommentById(commentId);
@@ -172,7 +172,7 @@ export class CommentService implements ICommentService {
 
     const reply = new Reply(
       commentId,
-      userId,
+      worldId,
       content,
       commentType,
       mediaUrl
@@ -262,10 +262,10 @@ export class CommentService implements ICommentService {
   async addReaction(
     targetId: string,
     targetType: string,
-    userId: string,
+    worldId: string,
     reactionType: ReactionType
   ): Promise<Reaction> {
-    this.logger.log(`Adding ${reactionType} reaction to ${targetType} with ID: ${targetId} by user: ${userId}`);
+    this.logger.log(`Adding ${reactionType} reaction to ${targetType} with ID: ${targetId} by user with World ID: ${worldId}`);
 
     // Validate target type
     if (targetType !== 'Comment' && targetType !== 'Reply') {
@@ -282,7 +282,7 @@ export class CommentService implements ICommentService {
     const reaction = new Reaction(
       targetId,
       targetType,
-      userId,
+      worldId,
       reactionType
     );
 
@@ -302,9 +302,9 @@ export class CommentService implements ICommentService {
   async getUserReaction(
     targetId: string,
     targetType: string,
-    userId: string
+    worldId: string
   ): Promise<Reaction | null> {
-    this.logger.log(`Getting reaction for ${targetType} with ID: ${targetId} by user: ${userId}`);
+    this.logger.log(`Getting reaction for ${targetType} with ID: ${targetId} by user with World ID: ${worldId}`);
 
     // Validate target type
     if (targetType !== 'Comment' && targetType !== 'Reply') {
@@ -312,7 +312,7 @@ export class CommentService implements ICommentService {
     }
 
     return await this.commentRepository.findReactionByUserAndTarget(
-      userId,
+      worldId,
       targetId,
       targetType
     );

@@ -9,8 +9,6 @@ import {
   Put,
   Delete,
   Query,
-  UseGuards,
-  Request,
   UseInterceptors,
   UploadedFile,
   BadRequestException
@@ -60,18 +58,14 @@ export class CommentController {
     description: 'Invalid input data.',
   })
   async createComment(
-    @Body() createCommentDto: CreateCommentDTO,
-    @Request() req
+    @Body() createCommentDto: CreateCommentDTO
   ) {
     this.logger.log('Received request to create comment');
 
-    // TODO: In a real application, you would get the userId from the authenticated user
-    // For now, we'll use a placeholder or pass it from the request
-    const userId = req.user?.id || '123456'; // Placeholder user ID
-
+    // Use the worldId from the request as the userId
     const result = await this.commentService.createComment(
       createCommentDto.advertisementId,
-      userId,
+      createCommentDto.worldId, // Use worldId instead of hardcoded userId
       createCommentDto.content,
       createCommentDto.commentType,
       createCommentDto.mediaUrl
@@ -121,8 +115,7 @@ export class CommentController {
   })
   async createCommentWithMedia(
     @Body() createCommentDto: CreateCommentDTO,
-    @UploadedFile() media: Express.Multer.File,
-    @Request() req
+    @UploadedFile() media: Express.Multer.File
   ) {
     this.logger.log('Received request to create comment with media');
 
@@ -130,12 +123,9 @@ export class CommentController {
       throw new BadRequestException('No media file uploaded');
     }
 
-    // In a real application, you would get the userId from the authenticated user
-    const userId = req.user?.id || '123456'; // Placeholder user ID
-
     const result = await this.commentService.createCommentWithMedia(
       createCommentDto.advertisementId,
-      userId,
+      createCommentDto.worldId, // Use worldId instead of hardcoded userId
       createCommentDto.content,
       createCommentDto.commentType,
       media
@@ -221,8 +211,7 @@ export class CommentController {
   })
   async updateComment(
     @Param('id') id: string,
-    @Body() updateCommentDto: UpdateCommentDTO,
-    @Request() req
+    @Body() updateCommentDto: UpdateCommentDTO
   ) {
     this.logger.log(`Received request to update comment with ID: ${id}`);
 
@@ -254,8 +243,7 @@ export class CommentController {
     description: 'Comment not found.',
   })
   async deleteComment(
-    @Param('id') id: string,
-    @Request() req
+    @Param('id') id: string
   ) {
     this.logger.log(`Received request to delete comment with ID: ${id}`);
 
@@ -279,17 +267,13 @@ export class CommentController {
     description: 'Invalid input data.',
   })
   async createReply(
-    @Body() createReplyDto: CreateReplyDTO,
-    @Request() req
+    @Body() createReplyDto: CreateReplyDTO
   ) {
     this.logger.log('Received request to create reply');
 
-    // TODO: In a real application, you would get the userId from the authenticated user
-    const userId = req.user?.id || '123456'; // Placeholder user ID
-
     const result = await this.commentService.createReply(
       createReplyDto.commentId,
-      userId,
+      createReplyDto.worldId, // Use worldId instead of hardcoded userId
       createReplyDto.content,
       createReplyDto.commentType,
       createReplyDto.mediaUrl
@@ -375,8 +359,7 @@ export class CommentController {
   })
   async updateReply(
     @Param('id') id: string,
-    @Body() updateReplyDto: UpdateReplyDTO,
-    @Request() req
+    @Body() updateReplyDto: UpdateReplyDTO
   ) {
     this.logger.log(`Received request to update reply with ID: ${id}`);
 
@@ -408,8 +391,7 @@ export class CommentController {
     description: 'Reply not found.',
   })
   async deleteReply(
-    @Param('id') id: string,
-    @Request() req
+    @Param('id') id: string
   ) {
     this.logger.log(`Received request to delete reply with ID: ${id}`);
 
@@ -433,18 +415,14 @@ export class CommentController {
     description: 'Invalid input data.',
   })
   async addReaction(
-    @Body() createReactionDto: CreateReactionDTO,
-    @Request() req
+    @Body() createReactionDto: CreateReactionDTO
   ) {
     this.logger.log('Received request to add reaction');
-
-    // TODO: In a real application, you would get the userId from the authenticated user
-    const userId = req.user?.id || '123456'; // Placeholder user ID
 
     const result = await this.commentService.addReaction(
       createReactionDto.targetId,
       createReactionDto.targetType,
-      userId,
+      createReactionDto.worldId,
       createReactionDto.reactionType
     );
 
@@ -467,8 +445,7 @@ export class CommentController {
     description: 'Reaction not found.',
   })
   async removeReaction(
-    @Param('id') id: string,
-    @Request() req
+    @Param('id') id: string
   ) {
     this.logger.log(`Received request to remove reaction with ID: ${id}`);
 
@@ -490,6 +467,11 @@ export class CommentController {
     description: 'The type of target (Comment or Reply)',
     enum: ['Comment', 'Reply'],
   })
+  @ApiQuery({
+    name: 'worldId',
+    required: true,
+    description: 'The World ID of the user',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The user reaction has been found',
@@ -498,16 +480,14 @@ export class CommentController {
   async getUserReaction(
     @Query('targetId') targetId: string,
     @Query('targetType') targetType: string,
-    @Request() req
+    @Query('worldId') worldId: string
   ) {
-    this.logger.log(`Received request to get user reaction for ${targetType} with ID: ${targetId}`);
-
-    const userId = req.user?.id || '123456'; // Placeholder user ID
+    this.logger.log(`Received request to get user reaction for ${targetType} with ID: ${targetId} by user with World ID: ${worldId}`);
 
     const result = await this.commentService.getUserReaction(
       targetId,
       targetType,
-      userId
+      worldId
     );
 
     return result;

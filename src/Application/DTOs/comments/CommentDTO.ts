@@ -22,14 +22,14 @@ export class CommentDTO {
     @IsString()
     content: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The type of comment',
         enum: CommentType
     })
     @IsEnum(CommentType)
     commentType: CommentType;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The URL of the media (image or video)',
         required: false
     })
@@ -64,18 +64,22 @@ export class CreateCommentDTO {
     @IsString()
     advertisementId: string;
 
+    @ApiProperty({ description: 'The World ID of the user creating the comment' })
+    @IsString()
+    worldId: string;
+
     @ApiProperty({ description: 'The content of the comment' })
     @IsString()
     content: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The type of comment',
         enum: CommentType
     })
     @IsEnum(CommentType)
     commentType: CommentType;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The URL of the media (image or video)',
         required: false
     })
@@ -90,14 +94,14 @@ export class UpdateCommentDTO {
     @IsString()
     content: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The type of comment',
         enum: CommentType
     })
     @IsEnum(CommentType)
     commentType: CommentType;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The URL of the media (image or video)',
         required: false
     })
@@ -124,14 +128,14 @@ export class ReplyDTO {
     @IsString()
     content: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The type of reply',
         enum: CommentType
     })
     @IsEnum(CommentType)
     commentType: CommentType;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The URL of the media (image or video)',
         required: false
     })
@@ -162,18 +166,22 @@ export class CreateReplyDTO {
     @IsString()
     commentId: string;
 
+    @ApiProperty({ description: 'The World ID of the user creating the reply' })
+    @IsString()
+    worldId: string;
+
     @ApiProperty({ description: 'The content of the reply' })
     @IsString()
     content: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The type of reply',
         enum: CommentType
     })
     @IsEnum(CommentType)
     commentType: CommentType;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The URL of the media (image or video)',
         required: false
     })
@@ -188,14 +196,14 @@ export class UpdateReplyDTO {
     @IsString()
     content: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The type of reply',
         enum: CommentType
     })
     @IsEnum(CommentType)
     commentType: CommentType;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The URL of the media (image or video)',
         required: false
     })
@@ -214,18 +222,18 @@ export class ReactionDTO {
     @IsString()
     targetId: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The type of target',
         enum: ['Comment', 'Reply']
     })
     @IsString()
     targetType: string;
 
-    @ApiProperty({ description: 'The ID of the user who created the reaction' })
+    @ApiProperty({ description: 'The World ID of the user creating the reaction' })
     @IsString()
-    userId: string;
+    worldId: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The type of reaction',
         enum: ReactionType
     })
@@ -243,14 +251,18 @@ export class CreateReactionDTO {
     @IsString()
     targetId: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'The type of target',
         enum: ['Comment', 'Reply']
     })
     @IsString()
     targetType: string;
 
-    @ApiProperty({ 
+    @ApiProperty({ description: 'The World ID of the user creating the reaction' })
+    @IsString()
+    worldId: string;
+
+    @ApiProperty({
         description: 'The type of reaction',
         enum: ReactionType
     })
@@ -260,7 +272,7 @@ export class CreateReactionDTO {
 
 // Pagination Query DTO
 export class PaginationQueryDTO {
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Page number (starts from 1)',
         default: 1,
         required: false
@@ -271,7 +283,7 @@ export class PaginationQueryDTO {
     @Type(() => Number)
     page?: number = 1;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Number of items per page',
         default: 10,
         required: false
