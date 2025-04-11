@@ -97,6 +97,11 @@ export class CommentService implements ICommentService {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
 
+    // If the comment has a mediaUrl, ensure it has the correct format with /uploads/ prefix
+    if (comment.mediaUrl && !comment.mediaUrl.startsWith('/uploads/')) {
+      comment.mediaUrl = this.fileUploadService.getFileUrl(comment.mediaUrl);
+    }
+
     return comment;
   }
 
@@ -115,6 +120,13 @@ export class CommentService implements ICommentService {
     );
 
     const total = await this.commentRepository.countCommentsByAdvertisementId(advertisementId);
+
+    // Ensure all comments have the correct mediaUrl format
+    comments.forEach(comment => {
+      if (comment.mediaUrl && !comment.mediaUrl.startsWith('/uploads/')) {
+        comment.mediaUrl = this.fileUploadService.getFileUrl(comment.mediaUrl);
+      }
+    });
 
     return {
       comments,
@@ -251,6 +263,11 @@ export class CommentService implements ICommentService {
       throw new NotFoundException(`Reply with ID ${id} not found`);
     }
 
+    // If the reply has a mediaUrl, ensure it has the correct format with /uploads/ prefix
+    if (reply.mediaUrl && !reply.mediaUrl.startsWith('/uploads/')) {
+      reply.mediaUrl = this.fileUploadService.getFileUrl(reply.mediaUrl);
+    }
+
     return reply;
   }
 
@@ -272,6 +289,13 @@ export class CommentService implements ICommentService {
     );
 
     const total = await this.commentRepository.countRepliesByCommentId(commentId);
+
+    // Ensure all replies have the correct mediaUrl format
+    replies.forEach(reply => {
+      if (reply.mediaUrl && !reply.mediaUrl.startsWith('/uploads/')) {
+        reply.mediaUrl = this.fileUploadService.getFileUrl(reply.mediaUrl);
+      }
+    });
 
     return {
       replies,
