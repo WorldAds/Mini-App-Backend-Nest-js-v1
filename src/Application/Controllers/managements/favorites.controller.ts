@@ -47,12 +47,12 @@ export class FavoriteController {
   })
   async addToFavorites(@Body() favoriteDto: FavoriteDTO) {
     this.logger.log(
-      `Adding advertisement ${favoriteDto.adId} to favorites for user ${favoriteDto.userAddress}`,
+      `Adding advertisement ${favoriteDto.adId} to favorites for user with World ID: ${favoriteDto.worldId}`,
     );
     return await this.favoriteService.addToFavorites(favoriteDto);
   }
 
-  @Delete(':adId/:userAddress')
+  @Delete(':adId/:worldId')
   @ApiOperation({ summary: 'Remove an advertisement from favorites' })
   @ApiParam({
     name: 'adId',
@@ -60,9 +60,9 @@ export class FavoriteController {
     description: 'The ID of the advertisement',
   })
   @ApiParam({
-    name: 'userAddress',
+    name: 'worldId',
     required: true,
-    description: 'The Ethereum address of the user',
+    description: 'The World ID of the user',
   })
   @ApiResponse({
     status: HttpStatus.NO_CONTENT,
@@ -75,30 +75,30 @@ export class FavoriteController {
   })
   async removeFromFavorites(
     @Param('adId') adId: string,
-    @Param('userAddress') userAddress: string,
+    @Param('worldId') worldId: string,
   ) {
     this.logger.log(
-      `Removing advertisement ${adId} from favorites for user ${userAddress}`,
+      `Removing advertisement ${adId} from favorites for user with World ID: ${worldId}`,
     );
-    await this.favoriteService.removeFromFavorites(adId, userAddress);
+    await this.favoriteService.removeFromFavorites(adId, worldId);
     return { statusCode: HttpStatus.NO_CONTENT };
   }
 
-  @Get('user/:userAddress')
+  @Get('user/:worldId')
   @ApiOperation({ summary: 'Get all favorites for a user' })
   @ApiParam({
-    name: 'userAddress',
+    name: 'worldId',
     required: true,
-    description: 'The Ethereum address of the user',
+    description: 'The World ID of the user',
   })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of all favorites for the user',
     type: [FavoriteDTO],
   })
-  async getUserFavorites(@Param('userAddress') userAddress: string) {
-    this.logger.log(`Retrieving favorites for user ${userAddress}`);
-    return await this.favoriteService.getUserFavorites(userAddress);
+  async getUserFavorites(@Param('worldId') worldId: string) {
+    this.logger.log(`Retrieving favorites for user with World ID: ${worldId}`);
+    return await this.favoriteService.getUserFavorites(worldId);
   }
 
   @Get('ad/:adId')

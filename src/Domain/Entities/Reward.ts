@@ -7,7 +7,7 @@ export class Reward {
     _id: ObjectId;
 
     @Column()
-    userId: string;
+    worldId: string;
 
     @Column()
     adId: string;
@@ -25,13 +25,13 @@ export class Reward {
     txHash?: string;
 
     constructor(
-        userId: string,
+        worldId: string,
         adId: string,
         rewardedAmount: number,
         chainId?: string,
         txHash?: string
     ) {
-        this.userId = userId;
+        this.worldId = worldId;
         this.adId = adId;
         this.rewardedAmount = rewardedAmount;
         this.chainId = chainId;

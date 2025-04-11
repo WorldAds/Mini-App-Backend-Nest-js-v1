@@ -14,12 +14,12 @@ export class RewardDTO {
     adId: string;
 
     @ApiProperty({
-        description: 'The user ID receiving the reward',
-        example: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
+        description: 'The World ID of the user receiving the reward',
+        example: 'user123'
     })
     @IsString()
     @IsNotEmpty()
-    userId: string;
+    worldId: string;
 
     @ApiProperty({
         description: 'The amount rewarded',

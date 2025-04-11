@@ -27,25 +27,25 @@ export class RewardController {
         description: 'Advertisement not found.',
     })
     async createReward(@Body() rewardDto: RewardDTO): Promise<RewardDTO> {
-        this.logger.log(`Creating reward for user ${rewardDto.userId} for ad ${rewardDto.adId}`);
+        this.logger.log(`Creating reward for user with World ID: ${rewardDto.worldId} for ad ${rewardDto.adId}`);
         return await this.rewardService.createReward(rewardDto);
     }
 
-    @Get('user/:userId')
+    @Get('user/:worldId')
     @ApiOperation({ summary: 'Get all rewards for a user' })
     @ApiParam({
-        name: 'userId',
+        name: 'worldId',
         required: true,
-        description: 'The ID of the user',
+        description: 'The World ID of the user',
     })
     @ApiResponse({
         status: HttpStatus.OK,
         description: 'List of all rewards for the user',
         type: [RewardDTO],
     })
-    async getUserRewards(@Param('userId') userId: string): Promise<RewardDTO[]> {
-        this.logger.log(`Retrieving rewards for user ${userId}`);
-        return await this.rewardService.getUserRewards(userId);
+    async getUserRewards(@Param('worldId') worldId: string): Promise<RewardDTO[]> {
+        this.logger.log(`Retrieving rewards for user with World ID: ${worldId}`);
+        return await this.rewardService.getUserRewards(worldId);
     }
 
     @Get('ad/:adId')
@@ -65,21 +65,21 @@ export class RewardController {
         return await this.rewardService.getAdRewards(adId);
     }
 
-    @Get('user/:userId/total')
+    @Get('user/:worldId/total')
     @ApiOperation({ summary: 'Get total rewards for a user' })
     @ApiParam({
-        name: 'userId',
+        name: 'worldId',
         required: true,
-        description: 'The ID of the user',
+        description: 'The World ID of the user',
     })
     @ApiResponse({
         status: HttpStatus.OK,
         description: 'Total rewards amount for the user',
         type: Number,
     })
-    async getUserTotalRewards(@Param('userId') userId: string): Promise<number> {
-        this.logger.log(`Retrieving total rewards for user ${userId}`);
-        return await this.rewardService.getUserTotalRewards(userId);
+    async getUserTotalRewards(@Param('worldId') worldId: string): Promise<number> {
+        this.logger.log(`Retrieving total rewards for user with World ID: ${worldId}`);
+        return await this.rewardService.getUserTotalRewards(worldId);
     }
 
     @Get('ad/:adId/total')
