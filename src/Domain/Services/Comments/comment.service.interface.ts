@@ -8,7 +8,7 @@ export interface ICommentService {
   // Comment methods
   createComment(
     advertisementId: string,
-    userId: string,
+    worldId: string,
     content: string,
     commentType: CommentType,
     mediaUrl?: string
@@ -16,7 +16,7 @@ export interface ICommentService {
 
   createCommentWithMedia(
     advertisementId: string,
-    userId: string,
+    worldId: string,
     content: string,
     commentType: CommentType,
     mediaFile: Express.Multer.File
@@ -42,10 +42,18 @@ export interface ICommentService {
   // Reply methods
   createReply(
     commentId: string,
-    userId: string,
+    worldId: string,
     content: string,
     commentType: CommentType,
     mediaUrl?: string
+  ): Promise<Reply>;
+
+  createReplyWithMedia(
+    commentId: string,
+    worldId: string,
+    content: string,
+    commentType: CommentType,
+    mediaFile: Express.Multer.File
   ): Promise<Reply>;
 
   getReplyById(id: string): Promise<Reply>;
@@ -69,7 +77,7 @@ export interface ICommentService {
   addReaction(
     targetId: string,
     targetType: string,
-    userId: string,
+    worldId: string,
     reactionType: ReactionType
   ): Promise<Reaction>;
 
@@ -78,6 +86,6 @@ export interface ICommentService {
   getUserReaction(
     targetId: string,
     targetType: string,
-    userId: string
+    worldId: string
   ): Promise<Reaction | null>;
 }

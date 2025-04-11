@@ -11,7 +11,7 @@ export interface ICommentRepository {
   updateComment(id: string, comment: Partial<Comment>): Promise<Comment>;
   deleteComment(id: string): Promise<void>;
   countCommentsByAdvertisementId(advertisementId: string): Promise<number>;
-  
+
   // Reply methods
   createReply(reply: Reply): Promise<Reply>;
   findReplyById(id: string): Promise<Reply | null>;
@@ -19,14 +19,14 @@ export interface ICommentRepository {
   updateReply(id: string, reply: Partial<Reply>): Promise<Reply>;
   deleteReply(id: string): Promise<void>;
   countRepliesByCommentId(commentId: string): Promise<number>;
-  
+
   // Reaction methods
   createReaction(reaction: Reaction): Promise<Reaction>;
   findReactionById(id: string): Promise<Reaction | null>;
-  findReactionByUserAndTarget(userId: string, targetId: string, targetType: string): Promise<Reaction | null>;
+  findReactionByUserAndTarget(worldId: string, targetId: string, targetType: string): Promise<Reaction | null>;
   deleteReaction(id: string): Promise<void>;
   countReactionsByTargetAndType(targetId: string, targetType: string, reactionType: ReactionType): Promise<number>;
-  
+
   // Update reaction counts
   updateCommentReactionCount(commentId: string): Promise<void>;
   updateReplyReactionCount(replyId: string): Promise<void>;

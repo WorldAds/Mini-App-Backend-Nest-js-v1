@@ -21,16 +21,16 @@ export class CommentService implements ICommentService {
   // Comment methods
   async createComment(
     advertisementId: string,
-    userId: string,
+    worldId: string,
     content: string,
     commentType: CommentType,
     mediaUrl?: string
   ): Promise<Comment> {
-    this.logger.log(`Creating new comment for advertisement: ${advertisementId} by user: ${userId}`);
+    this.logger.log(`Creating new comment for advertisement: ${advertisementId} by user with World ID: ${worldId}`);
 
     const comment = new Comment(
       advertisementId,
-      userId,
+      worldId,
       content,
       commentType,
       mediaUrl
@@ -44,12 +44,12 @@ export class CommentService implements ICommentService {
 
   async createCommentWithMedia(
     advertisementId: string,
-    userId: string,
+    worldId: string,
     content: string,
     commentType: CommentType,
     mediaFile: Express.Multer.File
   ): Promise<Comment> {
-    this.logger.log(`Creating new comment with media for advertisement: ${advertisementId} by user: ${userId}`);
+    this.logger.log(`Creating new comment with media for advertisement: ${advertisementId} by user with World ID: ${worldId}`);
 
     // Validate media type based on commentType
     if (commentType === CommentType.Image) {
@@ -75,7 +75,7 @@ export class CommentService implements ICommentService {
     // Create the comment with the media URL
     const comment = new Comment(
       advertisementId,
-      userId,
+      worldId,
       content,
       commentType,
       relativePath // Store the relative path in the database
@@ -97,6 +97,11 @@ export class CommentService implements ICommentService {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
 
+    // If the comment has a mediaUrl, ensure it has the correct format with /uploads/ prefix
+    if (comment.mediaUrl && !comment.mediaUrl.startsWith('/uploads/')) {
+      comment.mediaUrl = this.fileUploadService.getFileUrl(comment.mediaUrl);
+    }
+
     return comment;
   }
 
@@ -115,6 +120,13 @@ export class CommentService implements ICommentService {
     );
 
     const total = await this.commentRepository.countCommentsByAdvertisementId(advertisementId);
+
+    // Ensure all comments have the correct mediaUrl format
+    comments.forEach(comment => {
+      if (comment.mediaUrl && !comment.mediaUrl.startsWith('/uploads/')) {
+        comment.mediaUrl = this.fileUploadService.getFileUrl(comment.mediaUrl);
+      }
+    });
 
     return {
       comments,
@@ -159,12 +171,12 @@ export class CommentService implements ICommentService {
   // Reply methods
   async createReply(
     commentId: string,
-    userId: string,
+    worldId: string,
     content: string,
     commentType: CommentType,
     mediaUrl?: string
   ): Promise<Reply> {
-    this.logger.log(`Creating new reply for comment: ${commentId} by user: ${userId}`);
+    this.logger.log(`Creating new reply for comment: ${commentId} by user with World ID: ${worldId}`);
 
     // Check if comment exists
     const comment = await this.getCommentById(commentId);
@@ -172,7 +184,7 @@ export class CommentService implements ICommentService {
 
     const reply = new Reply(
       commentId,
-      userId,
+      worldId,
       content,
       commentType,
       mediaUrl
@@ -188,12 +200,72 @@ export class CommentService implements ICommentService {
     return created;
   }
 
+  async createReplyWithMedia(
+    commentId: string,
+    worldId: string,
+    content: string,
+    commentType: CommentType,
+    mediaFile: Express.Multer.File
+  ): Promise<Reply> {
+    this.logger.log(`Creating new reply with media for comment: ${commentId} by user with World ID: ${worldId}`);
+
+    // Check if comment exists
+    const comment = await this.getCommentById(commentId);
+    this.logger.log(`Found parent comment with ID: ${comment._id}, current replyCount: ${comment.replyCount}`);
+
+    // Validate media type based on commentType
+    if (commentType === CommentType.Image) {
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+      if (!validImageTypes.includes(mediaFile.mimetype)) {
+        throw new BadRequestException('Invalid file type for image. Only JPG, PNG, and GIF are allowed.');
+      }
+    } else if (commentType === CommentType.Video) {
+      const validVideoTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo'];
+      if (!validVideoTypes.includes(mediaFile.mimetype)) {
+        throw new BadRequestException('Invalid file type for video. Only MP4, MPEG, MOV, and AVI are allowed.');
+      }
+    } else {
+      throw new BadRequestException('Comment type must be Image or Video when uploading media.');
+    }
+
+    // Save the media file
+    const relativePath = await this.fileUploadService.saveCommentMedia(mediaFile);
+
+    // Get the public URL
+    const mediaUrl = this.fileUploadService.getFileUrl(relativePath);
+
+    // Create the reply with the media URL
+    const reply = new Reply(
+      commentId,
+      worldId,
+      content,
+      commentType,
+      relativePath // Store the relative path in the database
+    );
+
+    const created = await this.commentRepository.createReply(reply);
+    this.logger.log(`Reply with media created successfully with ID: ${created._id}`);
+
+    // Verify the comment's reply count was updated
+    const updatedComment = await this.getCommentById(commentId);
+    this.logger.log(`After reply creation, comment replyCount: ${updatedComment.replyCount}`);
+
+    // Return the reply with the public URL for the media
+    created.mediaUrl = mediaUrl;
+    return created;
+  }
+
   async getReplyById(id: string): Promise<Reply> {
     this.logger.log(`Retrieving reply with ID: ${id}`);
     const reply = await this.commentRepository.findReplyById(id);
 
     if (!reply) {
       throw new NotFoundException(`Reply with ID ${id} not found`);
+    }
+
+    // If the reply has a mediaUrl, ensure it has the correct format with /uploads/ prefix
+    if (reply.mediaUrl && !reply.mediaUrl.startsWith('/uploads/')) {
+      reply.mediaUrl = this.fileUploadService.getFileUrl(reply.mediaUrl);
     }
 
     return reply;
@@ -217,6 +289,13 @@ export class CommentService implements ICommentService {
     );
 
     const total = await this.commentRepository.countRepliesByCommentId(commentId);
+
+    // Ensure all replies have the correct mediaUrl format
+    replies.forEach(reply => {
+      if (reply.mediaUrl && !reply.mediaUrl.startsWith('/uploads/')) {
+        reply.mediaUrl = this.fileUploadService.getFileUrl(reply.mediaUrl);
+      }
+    });
 
     return {
       replies,
@@ -262,10 +341,10 @@ export class CommentService implements ICommentService {
   async addReaction(
     targetId: string,
     targetType: string,
-    userId: string,
+    worldId: string,
     reactionType: ReactionType
   ): Promise<Reaction> {
-    this.logger.log(`Adding ${reactionType} reaction to ${targetType} with ID: ${targetId} by user: ${userId}`);
+    this.logger.log(`Adding ${reactionType} reaction to ${targetType} with ID: ${targetId} by user with World ID: ${worldId}`);
 
     // Validate target type
     if (targetType !== 'Comment' && targetType !== 'Reply') {
@@ -282,7 +361,7 @@ export class CommentService implements ICommentService {
     const reaction = new Reaction(
       targetId,
       targetType,
-      userId,
+      worldId,
       reactionType
     );
 
@@ -302,9 +381,9 @@ export class CommentService implements ICommentService {
   async getUserReaction(
     targetId: string,
     targetType: string,
-    userId: string
+    worldId: string
   ): Promise<Reaction | null> {
-    this.logger.log(`Getting reaction for ${targetType} with ID: ${targetId} by user: ${userId}`);
+    this.logger.log(`Getting reaction for ${targetType} with ID: ${targetId} by user with World ID: ${worldId}`);
 
     // Validate target type
     if (targetType !== 'Comment' && targetType !== 'Reply') {
@@ -312,7 +391,7 @@ export class CommentService implements ICommentService {
     }
 
     return await this.commentRepository.findReactionByUserAndTarget(
-      userId,
+      worldId,
       targetId,
       targetType
     );
