@@ -35,6 +35,11 @@ export class UserService implements IUserService {
       avatarUrl
     );
 
+    // If the avatarUrl is a local path (starts with 'avatars/'), add the /uploads/ prefix before saving
+    if (user.avatarUrl && user.avatarUrl.startsWith('avatars/') && !user.avatarUrl.startsWith('/uploads/')) {
+      user.avatarUrl = this.fileUploadService.getAvatarUrl(user.avatarUrl);
+    }
+
     const created = await this.userRepository.create(user);
     this.logger.log(`User created successfully with ID: ${created._id}`);
 
@@ -49,6 +54,8 @@ export class UserService implements IUserService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
+    // The avatarUrl should already have the correct format in the database
+
     return user;
   }
 
@@ -60,6 +67,8 @@ export class UserService implements IUserService {
       throw new NotFoundException(`User with World ID ${worldId} not found`);
     }
 
+    // The avatarUrl should already have the correct format in the database
+
     return user;
   }
 
@@ -70,16 +79,24 @@ export class UserService implements IUserService {
     const user = await this.getUserById(id);
 
     // If the user already has a custom avatar, delete the old file
-    if (user.avatarUrl && user.avatarUrl.startsWith('avatars/')) {
+    if (user.avatarUrl && user.avatarUrl.includes('/uploads/avatars/')) {
       try {
-        await this.fileUploadService.deleteFile(user.avatarUrl);
+        // Remove the /uploads/ prefix for the file deletion
+        const relativePath = user.avatarUrl.replace(/^\/uploads\//, '');
+        await this.fileUploadService.deleteFile(relativePath);
       } catch (error) {
         this.logger.warn(`Failed to delete old avatar: ${error.message}`);
         // Continue with the update even if deletion fails
       }
     }
 
-    const updated = await this.userRepository.updateAvatar(id, avatarUrl);
+    // If the avatarUrl doesn't start with /uploads/ and it's a local path, add the prefix
+    let fullAvatarUrl = avatarUrl;
+    if (avatarUrl && avatarUrl.startsWith('avatars/') && !avatarUrl.startsWith('/uploads/')) {
+      fullAvatarUrl = this.fileUploadService.getAvatarUrl(avatarUrl);
+    }
+
+    const updated = await this.userRepository.updateAvatar(id, fullAvatarUrl);
     this.logger.log(`Avatar updated successfully for user: ${id}`);
 
     return updated;
@@ -94,25 +111,23 @@ export class UserService implements IUserService {
     // Save the file
     const relativePath = await this.fileUploadService.saveAvatar(file);
 
-    // Get the public URL
-    const avatarUrl = this.fileUploadService.getAvatarUrl(relativePath);
-
     // If the user already has a custom avatar, delete the old file
-    if (user.avatarUrl && user.avatarUrl.startsWith('avatars/')) {
+    if (user.avatarUrl && user.avatarUrl.includes('/uploads/avatars/')) {
       try {
-        await this.fileUploadService.deleteFile(user.avatarUrl);
+        // Remove the /uploads/ prefix for the file deletion
+        const oldRelativePath = user.avatarUrl.replace(/^\/uploads\//, '');
+        await this.fileUploadService.deleteFile(oldRelativePath);
       } catch (error) {
         this.logger.warn(`Failed to delete old avatar: ${error.message}`);
         // Continue with the update even if deletion fails
       }
     }
 
-    // Update the user's avatar
-    const updated = await this.userRepository.updateAvatar(id, relativePath);
+    // Store the full path with /uploads/ prefix in the database
+    const fullPath = this.fileUploadService.getAvatarUrl(relativePath);
+    const updated = await this.userRepository.updateAvatar(id, fullPath);
     this.logger.log(`Avatar uploaded successfully for user: ${id}`);
 
-    // Return the updated user with the public URL for the avatar
-    updated.avatarUrl = avatarUrl;
     return updated;
   }
 
@@ -125,6 +140,8 @@ export class UserService implements IUserService {
     const updated = await this.userRepository.updateNickname(id, nickname);
     this.logger.log(`Nickname updated successfully for user: ${id}`);
 
+    // The avatarUrl should already have the correct format in the database
+
     return updated;
   }
 
@@ -136,6 +153,8 @@ export class UserService implements IUserService {
 
     const updated = await this.userRepository.updateWalletBalance(id, balance);
     this.logger.log(`Wallet balance updated successfully for user: ${id}`);
+
+    // The avatarUrl should already have the correct format in the database
 
     return updated;
   }
@@ -161,6 +180,8 @@ export class UserService implements IUserService {
         updatedAt: new Date()
       });
     }
+
+    // The avatarUrl should already have the correct format in the database
 
     return existingUser;
   }
