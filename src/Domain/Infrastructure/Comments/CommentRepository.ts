@@ -139,12 +139,26 @@ export class CommentRepository implements ICommentRepository {
   }
 
   async findRepliesByCommentId(commentId: string, skip = 0, take = 10): Promise<Reply[]> {
-    return await this.replyRepository.find({
-      where: { commentId },
-      order: { createdAt: 'ASC' },
-      skip,
-      take,
-    });
+    console.log(`Finding replies for comment: ${commentId}, skip: ${skip}, take: ${take}`);
+
+    try {
+      // Get all replies for this comment
+      const allReplies = await this.replyRepository.find({
+        where: { commentId },
+        order: { createdAt: 'ASC' }
+      });
+
+      console.log(`Found ${allReplies.length} total replies for comment: ${commentId}`);
+
+      // Apply pagination manually
+      const paginatedReplies = allReplies.slice(skip, skip + take);
+      console.log(`Returning ${paginatedReplies.length} replies after pagination`);
+
+      return paginatedReplies;
+    } catch (error) {
+      console.error(`Error finding replies: ${error.message}`);
+      return [];
+    }
   }
 
   async updateReply(id: string, replyData: Partial<Reply>): Promise<Reply> {
@@ -181,9 +195,21 @@ export class CommentRepository implements ICommentRepository {
   }
 
   async countRepliesByCommentId(commentId: string): Promise<number> {
-    return await this.replyRepository.count({
-      where: { commentId },
-    });
+    console.log(`Counting replies for comment: ${commentId}`);
+
+    try {
+      // Get all replies for this comment
+      const replies = await this.replyRepository.find({
+        where: { commentId }
+      });
+
+      const count = replies.length;
+      console.log(`Found ${count} replies for comment: ${commentId}`);
+      return count;
+    } catch (error) {
+      console.error(`Error counting replies: ${error.message}`);
+      return 0;
+    }
   }
 
   // Reaction methods

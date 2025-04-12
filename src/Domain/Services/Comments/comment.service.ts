@@ -194,10 +194,13 @@ export class CommentService implements ICommentService {
       mediaUrl
     );
 
+    // Create the reply
+    this.logger.log(`Calling commentRepository.createReply for comment: ${commentId}`);
     const created = await this.commentRepository.createReply(reply);
     this.logger.log(`Reply created successfully with ID: ${created._id}`);
 
     // Verify the comment's reply count was updated
+    this.logger.log(`Verifying reply count update for comment: ${commentId}`);
     const updatedComment = await this.getCommentById(commentId);
     this.logger.log(`After reply creation, comment replyCount: ${updatedComment.replyCount}`);
 
@@ -247,12 +250,15 @@ export class CommentService implements ICommentService {
       relativePath // Store the relative path in the database
     );
 
+    // Create the reply
+    this.logger.log(`Calling commentRepository.createReply for comment: ${commentId} with media`);
     const created = await this.commentRepository.createReply(reply);
     this.logger.log(`Reply with media created successfully with ID: ${created._id}`);
 
     // Verify the comment's reply count was updated
+    this.logger.log(`Verifying reply count update for comment: ${commentId}`);
     const updatedComment = await this.getCommentById(commentId);
-    this.logger.log(`After reply creation, comment replyCount: ${updatedComment.replyCount}`);
+    this.logger.log(`After reply creation with media, comment replyCount: ${updatedComment.replyCount}`);
 
     // Return the reply with the public URL for the media
     created.mediaUrl = mediaUrl;
