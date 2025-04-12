@@ -24,6 +24,7 @@ export interface ICommentRepository {
   createReaction(reaction: Reaction): Promise<Reaction>;
   findReactionById(id: string): Promise<Reaction | null>;
   findReactionByUserAndTarget(worldId: string, targetId: string, targetType: string): Promise<Reaction | null>;
+  updateReaction(id: string, updateData: Partial<Reaction>): Promise<Reaction>;
   deleteReaction(id: string): Promise<void>;
   countReactionsByTargetAndType(targetId: string, targetType: string, reactionType: ReactionType): Promise<number>;
 

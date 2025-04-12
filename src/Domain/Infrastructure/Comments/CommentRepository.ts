@@ -44,12 +44,26 @@ export class CommentRepository implements ICommentRepository {
   }
 
   async findCommentsByAdvertisementId(advertisementId: string, skip = 0, take = 10): Promise<Comment[]> {
-    return await this.commentRepository.find({
-      where: { advertisementId },
-      order: { createdAt: 'DESC' },
-      skip,
-      take,
-    });
+    console.log(`Finding comments for advertisement: ${advertisementId}, skip: ${skip}, take: ${take}`);
+
+    try {
+      // Get all comments for this advertisement
+      const allComments = await this.commentRepository.find({
+        where: { advertisementId },
+        order: { createdAt: 'DESC' }
+      });
+
+      console.log(`Found ${allComments.length} total comments for advertisement: ${advertisementId}`);
+
+      // Apply pagination manually
+      const paginatedComments = allComments.slice(skip, skip + take);
+      console.log(`Returning ${paginatedComments.length} comments after pagination`);
+
+      return paginatedComments;
+    } catch (error) {
+      console.error(`Error finding comments: ${error.message}`);
+      return [];
+    }
   }
 
   async updateComment(id: string, commentData: Partial<Comment>): Promise<Comment> {
@@ -79,9 +93,21 @@ export class CommentRepository implements ICommentRepository {
   }
 
   async countCommentsByAdvertisementId(advertisementId: string): Promise<number> {
-    return await this.commentRepository.count({
-      where: { advertisementId },
-    });
+    console.log(`Counting comments for advertisement: ${advertisementId}`);
+
+    try {
+      // First, get all comments for this advertisement (without pagination)
+      const comments = await this.commentRepository.find({
+        where: { advertisementId }
+      });
+
+      const count = comments.length;
+      console.log(`Found ${count} comments for advertisement: ${advertisementId}`);
+      return count;
+    } catch (error) {
+      console.error(`Error counting comments: ${error.message}`);
+      return 0;
+    }
   }
 
   // Reply methods
@@ -113,12 +139,26 @@ export class CommentRepository implements ICommentRepository {
   }
 
   async findRepliesByCommentId(commentId: string, skip = 0, take = 10): Promise<Reply[]> {
-    return await this.replyRepository.find({
-      where: { commentId },
-      order: { createdAt: 'ASC' },
-      skip,
-      take,
-    });
+    console.log(`Finding replies for comment: ${commentId}, skip: ${skip}, take: ${take}`);
+
+    try {
+      // Get all replies for this comment
+      const allReplies = await this.replyRepository.find({
+        where: { commentId },
+        order: { createdAt: 'ASC' }
+      });
+
+      console.log(`Found ${allReplies.length} total replies for comment: ${commentId}`);
+
+      // Apply pagination manually
+      const paginatedReplies = allReplies.slice(skip, skip + take);
+      console.log(`Returning ${paginatedReplies.length} replies after pagination`);
+
+      return paginatedReplies;
+    } catch (error) {
+      console.error(`Error finding replies: ${error.message}`);
+      return [];
+    }
   }
 
   async updateReply(id: string, replyData: Partial<Reply>): Promise<Reply> {
@@ -155,9 +195,21 @@ export class CommentRepository implements ICommentRepository {
   }
 
   async countRepliesByCommentId(commentId: string): Promise<number> {
-    return await this.replyRepository.count({
-      where: { commentId },
-    });
+    console.log(`Counting replies for comment: ${commentId}`);
+
+    try {
+      // Get all replies for this comment
+      const replies = await this.replyRepository.find({
+        where: { commentId }
+      });
+
+      const count = replies.length;
+      console.log(`Found ${count} replies for comment: ${commentId}`);
+      return count;
+    } catch (error) {
+      console.error(`Error counting replies: ${error.message}`);
+      return 0;
+    }
   }
 
   // Reaction methods
@@ -212,6 +264,29 @@ export class CommentRepository implements ICommentRepository {
     return await this.reactionRepository.findOne({
       where: { worldId, targetId, targetType },
     });
+  }
+
+  async updateReaction(id: string, updateData: Partial<Reaction>): Promise<Reaction> {
+    console.log(`Updating reaction with ID: ${id}`);
+
+    const reaction = await this.findReactionById(id);
+    if (!reaction) {
+      throw new NotFoundException(`Reaction with ID ${id} not found`);
+    }
+
+    // Update the reaction
+    await this.reactionRepository.update(
+      { _id: new ObjectId(id) },
+      { ...updateData, updatedAt: new Date() }
+    );
+
+    // Get the updated reaction
+    const updatedReaction = await this.findReactionById(id);
+    if (!updatedReaction) {
+      throw new NotFoundException(`Reaction with ID ${id} not found after update`);
+    }
+
+    return updatedReaction;
   }
 
   async deleteReaction(id: string): Promise<void> {
