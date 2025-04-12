@@ -522,4 +522,52 @@ export class CommentService implements ICommentService {
       targetType
     );
   }
+
+  async getUserReactionsForAdvertisement(
+    advertisementId: string,
+    worldId: string
+  ): Promise<{ commentReactions: Record<string, string>, replyReactions: Record<string, string> }> {
+    this.logger.log(`Getting all reactions for advertisement: ${advertisementId} by user with World ID: ${worldId}`);
+
+    // Get all comments for the advertisement
+    const comments = await this.commentRepository.findCommentsByAdvertisementId(advertisementId, 0, 1000);
+    this.logger.log(`Found ${comments.length} comments for advertisement: ${advertisementId}`);
+
+    // Get all replies for these comments
+    let allReplies: Reply[] = [];
+    for (const comment of comments) {
+      const replies = await this.commentRepository.findRepliesByCommentId(comment._id.toString(), 0, 1000);
+      allReplies = [...allReplies, ...replies];
+    }
+    this.logger.log(`Found ${allReplies.length} replies for all comments in advertisement: ${advertisementId}`);
+
+    // Get all reactions by this user for these comments and replies
+    const commentReactions: Record<string, string> = {};
+    const replyReactions: Record<string, string> = {};
+
+    // Process comments
+    for (const comment of comments) {
+      const commentId = comment._id.toString();
+      const reaction = await this.commentRepository.findReactionByUserAndTarget(worldId, commentId, 'Comment');
+      if (reaction) {
+        commentReactions[commentId] = reaction.reactionType;
+      }
+    }
+
+    // Process replies
+    for (const reply of allReplies) {
+      const replyId = reply._id.toString();
+      const reaction = await this.commentRepository.findReactionByUserAndTarget(worldId, replyId, 'Reply');
+      if (reaction) {
+        replyReactions[replyId] = reaction.reactionType;
+      }
+    }
+
+    this.logger.log(`Found ${Object.keys(commentReactions).length} comment reactions and ${Object.keys(replyReactions).length} reply reactions`);
+
+    return {
+      commentReactions,
+      replyReactions
+    };
+  }
 }
