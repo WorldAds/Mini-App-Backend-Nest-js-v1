@@ -120,6 +120,7 @@ export class CommentService implements ICommentService {
     );
 
     const total = await this.commentRepository.countCommentsByAdvertisementId(advertisementId);
+    this.logger.log(`Total comments for advertisement ${advertisementId}: ${total}`);
 
     // Ensure all comments have the correct mediaUrl format
     comments.forEach(comment => {
@@ -127,6 +128,9 @@ export class CommentService implements ICommentService {
         comment.mediaUrl = this.fileUploadService.getFileUrl(comment.mediaUrl);
       }
     });
+
+    // Log the final result
+    this.logger.log(`Returning ${comments.length} comments with total count: ${total}`);
 
     return {
       comments,

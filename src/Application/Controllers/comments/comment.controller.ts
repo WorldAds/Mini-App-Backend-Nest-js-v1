@@ -190,6 +190,15 @@ export class CommentController {
       limit
     );
 
+    // Log the result details
+    this.logger.log(`Controller received result: ${result.comments.length} comments, total: ${result.total}`);
+
+    // Ensure the total is a number
+    if (typeof result.total !== 'number') {
+      this.logger.warn(`Total is not a number: ${result.total}, converting to number`);
+      result.total = Number(result.total) || result.comments.length;
+    }
+
     return result;
   }
 
