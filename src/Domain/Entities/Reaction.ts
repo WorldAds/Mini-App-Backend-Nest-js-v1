@@ -21,6 +21,9 @@ export class Reaction {
   @Column()
   createdAt: Date;
 
+  @Column()
+  updatedAt: Date;
+
   constructor(
     targetId: string,
     targetType: string,
@@ -31,6 +34,8 @@ export class Reaction {
     this.targetType = targetType;
     this.worldId = worldId;
     this.reactionType = reactionType;
-    this.createdAt = new Date();
+    const now = new Date();
+    this.createdAt = now;
+    this.updatedAt = now;
   }
 }

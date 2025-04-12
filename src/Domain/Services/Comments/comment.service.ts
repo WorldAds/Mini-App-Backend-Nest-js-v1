@@ -361,13 +361,74 @@ export class CommentService implements ICommentService {
       throw new BadRequestException('Invalid target type. Must be either "Comment" or "Reply"');
     }
 
-    // Check if target exists
+    // Check if target exists and get the current target object
+    let target: Comment | Reply;
     if (targetType === 'Comment') {
-      await this.getCommentById(targetId);
+      target = await this.getCommentById(targetId);
     } else if (targetType === 'Reply') {
-      await this.getReplyById(targetId);
+      target = await this.getReplyById(targetId);
+    } else {
+      throw new BadRequestException('Invalid target type');
     }
 
+    // Check if user already reacted to this target
+    const existingReaction = await this.commentRepository.findReactionByUserAndTarget(
+      worldId,
+      targetId,
+      targetType
+    );
+
+    if (existingReaction) {
+      // If the user is changing their reaction type (e.g., from like to dislike)
+      if (existingReaction.reactionType !== reactionType) {
+        // Decrement the old reaction count
+        if (existingReaction.reactionType === ReactionType.Like) {
+          if (targetType === 'Comment') {
+            await this.commentRepository.updateComment(targetId, { likeCount: Math.max(0, target.likeCount - 1) });
+          } else {
+            await this.commentRepository.updateReply(targetId, { likeCount: Math.max(0, target.likeCount - 1) });
+          }
+        } else if (existingReaction.reactionType === ReactionType.Dislike) {
+          if (targetType === 'Comment') {
+            await this.commentRepository.updateComment(targetId, { dislikeCount: Math.max(0, target.dislikeCount - 1) });
+          } else {
+            await this.commentRepository.updateReply(targetId, { dislikeCount: Math.max(0, target.dislikeCount - 1) });
+          }
+        }
+
+        // Update the existing reaction
+        await this.commentRepository.updateReaction(existingReaction._id.toString(), { reactionType });
+
+        // Increment the new reaction count
+        if (reactionType === ReactionType.Like) {
+          if (targetType === 'Comment') {
+            await this.commentRepository.updateComment(targetId, { likeCount: target.likeCount + 1 });
+          } else {
+            await this.commentRepository.updateReply(targetId, { likeCount: target.likeCount + 1 });
+          }
+        } else if (reactionType === ReactionType.Dislike) {
+          if (targetType === 'Comment') {
+            await this.commentRepository.updateComment(targetId, { dislikeCount: target.dislikeCount + 1 });
+          } else {
+            await this.commentRepository.updateReply(targetId, { dislikeCount: target.dislikeCount + 1 });
+          }
+        }
+
+        // Get the updated reaction
+        const updatedReaction = await this.commentRepository.findReactionById(existingReaction._id.toString());
+        if (!updatedReaction) {
+          throw new NotFoundException(`Reaction with ID ${existingReaction._id.toString()} not found after update`);
+        }
+        this.logger.log(`Reaction updated successfully with ID: ${updatedReaction._id}`);
+        return updatedReaction;
+      }
+
+      // If the user is trying to add the same reaction type, return the existing one
+      this.logger.log(`User already reacted with ${reactionType} to this ${targetType}`);
+      return existingReaction;
+    }
+
+    // Create a new reaction
     const reaction = new Reaction(
       targetId,
       targetType,
@@ -378,12 +439,67 @@ export class CommentService implements ICommentService {
     const created = await this.commentRepository.createReaction(reaction);
     this.logger.log(`Reaction created successfully with ID: ${created._id}`);
 
+    // Increment the appropriate count on the target
+    if (reactionType === ReactionType.Like) {
+      if (targetType === 'Comment') {
+        await this.commentRepository.updateComment(targetId, { likeCount: target.likeCount + 1 });
+        this.logger.log(`Incremented like count for comment ${targetId} to ${target.likeCount + 1}`);
+      } else {
+        await this.commentRepository.updateReply(targetId, { likeCount: target.likeCount + 1 });
+        this.logger.log(`Incremented like count for reply ${targetId} to ${target.likeCount + 1}`);
+      }
+    } else if (reactionType === ReactionType.Dislike) {
+      if (targetType === 'Comment') {
+        await this.commentRepository.updateComment(targetId, { dislikeCount: target.dislikeCount + 1 });
+        this.logger.log(`Incremented dislike count for comment ${targetId} to ${target.dislikeCount + 1}`);
+      } else {
+        await this.commentRepository.updateReply(targetId, { dislikeCount: target.dislikeCount + 1 });
+        this.logger.log(`Incremented dislike count for reply ${targetId} to ${target.dislikeCount + 1}`);
+      }
+    }
+
     return created;
   }
 
   async removeReaction(id: string): Promise<void> {
     this.logger.log(`Removing reaction with ID: ${id}`);
 
+    // Get the reaction before deleting it
+    const reaction = await this.commentRepository.findReactionById(id);
+    if (!reaction) {
+      throw new NotFoundException(`Reaction with ID ${id} not found`);
+    }
+
+    // Get the target (comment or reply)
+    let target: Comment | Reply;
+    if (reaction.targetType === 'Comment') {
+      target = await this.getCommentById(reaction.targetId);
+    } else if (reaction.targetType === 'Reply') {
+      target = await this.getReplyById(reaction.targetId);
+    } else {
+      throw new BadRequestException('Invalid target type');
+    }
+
+    // Decrement the appropriate count on the target
+    if (reaction.reactionType === ReactionType.Like) {
+      if (reaction.targetType === 'Comment') {
+        await this.commentRepository.updateComment(reaction.targetId, { likeCount: Math.max(0, target.likeCount - 1) });
+        this.logger.log(`Decremented like count for comment ${reaction.targetId} to ${Math.max(0, target.likeCount - 1)}`);
+      } else {
+        await this.commentRepository.updateReply(reaction.targetId, { likeCount: Math.max(0, target.likeCount - 1) });
+        this.logger.log(`Decremented like count for reply ${reaction.targetId} to ${Math.max(0, target.likeCount - 1)}`);
+      }
+    } else if (reaction.reactionType === ReactionType.Dislike) {
+      if (reaction.targetType === 'Comment') {
+        await this.commentRepository.updateComment(reaction.targetId, { dislikeCount: Math.max(0, target.dislikeCount - 1) });
+        this.logger.log(`Decremented dislike count for comment ${reaction.targetId} to ${Math.max(0, target.dislikeCount - 1)}`);
+      } else {
+        await this.commentRepository.updateReply(reaction.targetId, { dislikeCount: Math.max(0, target.dislikeCount - 1) });
+        this.logger.log(`Decremented dislike count for reply ${reaction.targetId} to ${Math.max(0, target.dislikeCount - 1)}`);
+      }
+    }
+
+    // Delete the reaction
     await this.commentRepository.deleteReaction(id);
     this.logger.log(`Reaction removed successfully: ${id}`);
   }

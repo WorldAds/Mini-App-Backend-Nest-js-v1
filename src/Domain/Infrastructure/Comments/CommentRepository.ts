@@ -266,6 +266,29 @@ export class CommentRepository implements ICommentRepository {
     });
   }
 
+  async updateReaction(id: string, updateData: Partial<Reaction>): Promise<Reaction> {
+    console.log(`Updating reaction with ID: ${id}`);
+
+    const reaction = await this.findReactionById(id);
+    if (!reaction) {
+      throw new NotFoundException(`Reaction with ID ${id} not found`);
+    }
+
+    // Update the reaction
+    await this.reactionRepository.update(
+      { _id: new ObjectId(id) },
+      { ...updateData, updatedAt: new Date() }
+    );
+
+    // Get the updated reaction
+    const updatedReaction = await this.findReactionById(id);
+    if (!updatedReaction) {
+      throw new NotFoundException(`Reaction with ID ${id} not found after update`);
+    }
+
+    return updatedReaction;
+  }
+
   async deleteReaction(id: string): Promise<void> {
     const reaction = await this.findReactionById(id);
     if (!reaction) {
