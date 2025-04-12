@@ -88,4 +88,9 @@ export interface ICommentService {
     targetType: string,
     worldId: string
   ): Promise<Reaction | null>;
+
+  getUserReactionsForAdvertisement(
+    advertisementId: string,
+    worldId: string
+  ): Promise<{ commentReactions: Record<string, string>, replyReactions: Record<string, string> }>;
 }

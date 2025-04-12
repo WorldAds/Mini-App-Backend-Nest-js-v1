@@ -35,6 +35,7 @@ import {
   CreateReactionDTO,
   PaginationQueryDTO
 } from 'src/Application/DTOs/comments/CommentDTO';
+import { UserReactionsDTO } from 'src/Application/DTOs/comments/UserReactionsDTO';
 import { CommentService } from 'src/Domain/Services/Comments/comment.service';
 
 @ApiTags('comments')
@@ -564,6 +565,37 @@ export class CommentController {
     const result = await this.commentService.getUserReaction(
       targetId,
       targetType,
+      worldId
+    );
+
+    return result;
+  }
+
+  @Get('reactions/advertisement/:advertisementId/user/:worldId')
+  @ApiOperation({ summary: 'Get all user reactions for an advertisement' })
+  @ApiParam({
+    name: 'advertisementId',
+    required: true,
+    description: 'The ID of the advertisement',
+  })
+  @ApiParam({
+    name: 'worldId',
+    required: true,
+    description: 'The World ID of the user',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The user reactions have been found',
+    type: UserReactionsDTO,
+  })
+  async getUserReactionsForAdvertisement(
+    @Param('advertisementId') advertisementId: string,
+    @Param('worldId') worldId: string
+  ) {
+    this.logger.log(`Received request to get all user reactions for advertisement: ${advertisementId} by user with World ID: ${worldId}`);
+
+    const result = await this.commentService.getUserReactionsForAdvertisement(
+      advertisementId,
       worldId
     );
 
